@@ -31,6 +31,15 @@ MULTIPLAYER
 Built with the Multiplayer mod and played through multiplayer sessions without trouble. One player has reported mass and landing problems that only appear in multiplayer, which I have not yet been able to reproduce - if you run into anything like that, please say so in the comments, it genuinely helps. It also runs fine without Multiplayer installed.
 https://steamcommunity.com/sharedfiles/filedetails/?id=2606448745
 
+COMPANION MODS
+Two mods that handle the other half of the same job - getting one of these craft loaded and away without ten minutes of clicking:
+
+Crew Presets - save named groups of colonists, animals and mechs - "Strike Team", "Pack Train" - and apply them with one click in the load dialog, instead of hand-picking the same pawns every launch.
+https://steamcommunity.com/sharedfiles/filedetails/?id=3756372833
+
+Transporter Loadouts - every transporter and shuttle remembers its own default cargo, pre-filled each time you open its load dialog. Crew Presets picks the people; this one picks the freight.
+https://steamcommunity.com/sharedfiles/filedetails/?id=3756377821
+
 Requires Odyssey. The Mechanitor Shuttle and Transport Drone additionally require Biotech.
 
 CHANGES
