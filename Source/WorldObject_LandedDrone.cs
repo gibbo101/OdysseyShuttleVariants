@@ -98,6 +98,17 @@ namespace OdysseyShuttleVariants
 
         public ActiveTransporterInfo Contents => contents;
 
+        // The def label says "drone", but this holder also parks any craft that arrives somewhere it
+        // cannot fit (see LandingGuard), so name it after whatever is actually sitting here.
+        public override string Label
+        {
+            get
+            {
+                Building_PassengerShuttle s = Shuttle;
+                return s != null ? "landed " + s.def.label : base.Label;
+            }
+        }
+
         public void SetContents(ActiveTransporterInfo info)
         {
             contents = info;

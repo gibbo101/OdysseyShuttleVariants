@@ -2,8 +2,8 @@
 <Defs>
 
   <!-- Shared in-flight world object (a map blip). Per-shuttle building + skyfaller art lives
-       with each shuttle def. NOTE: expandingIconTexture still points at the vanilla world icon
-       (a tiny map marker) - clone it to Textures/World/... later if full separation is wanted. -->
+       with each shuttle def; the world-map icon is the vanilla passenger-shuttle marker, shared by
+       every variant in flight. -->
   <WorldObjectDef ParentName="ShuttleWorldObjectBase">
     <defName>OSV_TravelingShuttle</defName>
     <label>shuttle</label>
@@ -18,7 +18,7 @@
   <WorldObjectDef>
     <defName>OSV_LandedDrone</defName>
     <label>landed transport drone</label>
-    <description>A transport drone parked on the surface, holding its cargo until it is recalled to a colony or sent onward.</description>
+    <description>A craft parked on the surface, holding its cargo until it is recalled to a colony or sent onward.</description>
     <worldObjectClass>OdysseyShuttleVariants.WorldObject_LandedDrone</worldObjectClass>
     <texture>World/WorldObjects/Caravan</texture>
     <useDynamicDrawer>true</useDynamicDrawer>
