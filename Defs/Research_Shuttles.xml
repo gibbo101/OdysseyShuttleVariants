@@ -4,9 +4,8 @@
   <!-- Unlock tree, rooted on vanilla Odyssey "Shuttles" (Odyssey is a hard mod requirement):
          Shuttles -> Troop -> Cargo -> Heavy
          Shuttles + StandardMechtech -> Mech -> Drone   (Biotech branch; Mech+Drone need Biotech)
-       Per-shuttle capacity-UPGRADE projects (cargo / fuel eff / range / crew-mech cap) are a later
-       C# phase (stats read research). Troop research is below; Heavy is below; Cargo is below;
-       Drone lives in ThingDefs_Drone.xml, Mech in Biotech/ThingDefs_MechShuttle.xml. -->
+       Troop, Cargo and Heavy research are below; Drone lives in ThingDefs_Drone.xml, Mech in
+       Biotech/ThingDefs_MechShuttle.xml. -->
 
   <ResearchProjectDef>
     <defName>OSV_CargoShuttleTech</defName>

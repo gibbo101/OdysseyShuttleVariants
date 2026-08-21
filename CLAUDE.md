@@ -61,6 +61,13 @@ Done: ✅ 5 craft + passenger integration · ✅ typed capacity + cargo mass-spl
 Remaining:
 1. **MP test** of the drone/camp/gift actions AND the new mech-charging toggle (troop/cargo launches
    verified clean; the toggle syncs via `CompMechChargerShuttle.SetChargingEnabled` in `MultiplayerCompat`).
+2. **Paint masks — auto colour-match ships as-is; the `_<facing>m.png` masks were never hand-edited.**
+   `tools/remask.py` paints every pixel within tolerance of a target colour (white 235/70 for
+   troop/drone/cargo, green 175,177,161/70 for mech), so it catches hull panels it shouldn't and misses
+   accents it should — patchy, inconsistent paint zones. Reported on the Workshop (Trouperton, 4 Jul 2026).
+   Plan: first re-tune target colour + tolerance PER CRAFT aiming for ~90% auto; only go fully manual
+   (hand-edit each mask, red = paints / black = keeps colour, via the remask.py preview/apply loop) if
+   that falls short.
 
 Recently landed (implementation notes):
 - **Mech charging at the Mechanitor shuttle** (`CompMechChargerShuttle` + `JobDriver_MechChargeAtShuttle` +

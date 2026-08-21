@@ -39,7 +39,6 @@
       </li>
       <li Class="OdysseyShuttleVariants.CompProperties_TypedShuttleCapacity">
         <maxColonists>1</maxColonists>
-        <!-- bandwidth budget + mechanitor-only are enforced in the next build; data captured now. -->
         <mechBandwidthCapacity>6</mechBandwidthCapacity>
         <requireMechanitor>true</requireMechanitor>
       </li>

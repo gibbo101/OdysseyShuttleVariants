@@ -3,10 +3,7 @@
 
   <!-- =================== Heavy Cargo Ship ===================
        The biggest hauler in the line: roughly double the cargo shuttle's hold, four engines,
-       a large footprint, slow turnaround and thirsty engines. Gated behind the cargo shuttle.
-       ART NOTE: placeholder is a single ¾ "hero" frame (Orca-inspired, clean-room original) used
-       NON-ROTATABLE for now. Proper top-down N/E/S directional frames are a follow-up; once they
-       exist, switch graphicClass back to Graphic_Multi + rotatable true like the other shuttles. -->
+       a large footprint, slow turnaround and thirsty engines. Gated behind the cargo shuttle. -->
   <ThingDef ParentName="OSV_ShuttleBase">
     <defName>OSV_HeavyCargoShip</defName>
     <label>heavy cargo ship</label>

@@ -5,17 +5,17 @@ using Verse;
 
 namespace OdysseyShuttleVariants
 {
-    // Typed-capacity layer for our buildable shuttles. FIRST BUILD scope: crew cap + autonomous
-    // (no-pawn) drone, plus an inspect line. The mech bandwidth budget and mechanitor-only /
-    // cargo-mass-split enforcement are the next layer (Harmony on the load logic); their data
-    // fields live here now so the XML is already forward-compatible.
+    // Typed-capacity layer for the mod's buildable shuttles: a crew-seat cap, a mech bandwidth
+    // budget, an autonomous (no-pawn) drone mode, and the inspect line reporting them. These
+    // fields hold the per-def limits; the load-time and launch-time enforcement lives in
+    // HarmonyPatches.
     public class CompProperties_TypedShuttleCapacity : CompProperties
     {
         // Max colonist passengers (seats). -1 leaves the vanilla default (unlimited, mass-gated).
         public int maxColonists = -1;
 
         // Mech "slots" as a bandwidth budget: sum of each aboard mech's vanilla BandwidthCost must
-        // stay <= this. 0 = not a mech carrier. (Enforcement: next build.)
+        // stay <= this. 0 = not a mech carrier.
         public int mechBandwidthCapacity = 0;
 
         // The single allowed passenger must be a mechanitor. (Enforcement: next build.)

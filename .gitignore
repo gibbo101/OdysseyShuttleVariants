@@ -8,8 +8,11 @@ Assemblies/*.pdb
 .vs/
 .idea/
 
-# Mod art IS tracked: custom AI-generated sprites plus a few vanilla bases used as permitted by
-# Ludeon's modding terms (disclaimer ships in About.xml). Only the build output above is ignored.
+# Textures/ is tracked deliberately - the sprites ship with the mod. Only the build output
+# above is ignored.
+
+# Local development log; notes-to-self, not part of the mod.
+docs/DEV-NOTES.md
 
 # OS cruft
 Thumbs.db
