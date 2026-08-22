@@ -26,7 +26,6 @@ FEATURES
 
 COMPATIBILITY
 - Instant Loot Shuttle: supported. Crew no longer count against the cargo hold when instant-loading, so a full squad will not refuse the launch or leave your cargo behind.
-- Shuttle retextures: safe. Each craft here is its own def with its own art, and the only vanilla thing this mod changes on the passenger shuttle is its capacity - no graphics are touched.
 
 MULTIPLAYER
 Built with the Multiplayer mod and played through multiplayer sessions without trouble. One player has reported mass and landing problems that only appear in multiplayer, which I have not yet been able to reproduce - if you run into anything like that, please say so in the comments, it genuinely helps. It also runs fine without Multiplayer installed.
