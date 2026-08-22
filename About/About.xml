@@ -22,6 +22,7 @@ FEATURES
 - Mech field charging at a landed Mechanitor Shuttle, run off its own chemfuel.
 - Mech-bay expansion research: two tiers that raise the Mechanitor Shuttle's carried-mech bandwidth (6 to 12 to 18) and widen its field-charging line (2 to 3 to 4 mechs at once). Already-built ships benefit the moment the research completes.
 - Every craft is research-gated off the vanilla Shuttles project, built in the Odyssey architect category, and costs a rare shuttle engine (trader/reward only; larger craft need more).
+- Works on other mods' shuttles: the mod options page lists every player shuttle you have installed, and any of them can be given seats, cargo mass and a mech bandwidth budget of your choosing. Craft from other mods are left exactly as their author made them until you opt them in.
 
 COMPATIBILITY
 - Instant Loot Shuttle: supported. Crew no longer count against the cargo hold when instant-loading, so a full squad will not refuse the launch or leave your cargo behind.
@@ -43,6 +44,9 @@ https://steamcommunity.com/sharedfiles/filedetails/?id=3756377821
 Requires Odyssey. The Mechanitor Shuttle and Transport Drone additionally require Biotech.
 
 CHANGES
+1.0.2
+- Typed capacity can now be applied to any player shuttle, including craft from other mods, from the mod options page. Your other mods are untouched until you opt a craft in, and changes take effect on restart.
+
 1.0.1
 - Fixed crew being charged against cargo capacity when loading with Instant Loot Shuttle, which could refuse a launch outright or load the crew and leave the cargo behind.
 - A craft arriving somewhere with no room large enough to land now holds position with its cargo aboard, to be recalled or redirected, instead of being set down where it does not fit.
