@@ -18,7 +18,7 @@ namespace OdysseyShuttleVariants
         // stay <= this. 0 = not a mech carrier.
         public int mechBandwidthCapacity = 0;
 
-        // The single allowed passenger must be a mechanitor. (Enforcement: next build.)
+        // The single allowed passenger must be a mechanitor.
         public bool requireMechanitor = false;
 
         // Autonomous craft: refuse ALL pawns/animals - items only.
