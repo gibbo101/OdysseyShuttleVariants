@@ -28,6 +28,133 @@ namespace OdysseyShuttleVariants
         {
             compClass = typeof(CompTypedShuttleCapacity);
         }
+
+        // The architect menu builds its info card from the DEF, which never touches a live comp - so
+        // the stats have to be produced here as well as on the comp itself, or a craft shows nothing
+        // useful until it has actually been built.
+        public override IEnumerable<StatDrawEntry> SpecialDisplayStats(StatRequest req)
+        {
+            ThingDef def = req.Def as ThingDef;
+            if (def == null) yield break;
+
+            // There is no live comp here, but the mech-bay research is global game state, so the
+            // build card can still show what a craft would actually be worth right now. Outside a
+            // running game MechBandwidthBonus returns 0 and this falls back to the base figure.
+            int bonus = CompTypedShuttleCapacity.MechBandwidthBonus();
+            int effective = mechBandwidthCapacity > 0 ? mechBandwidthCapacity + bonus : mechBandwidthCapacity;
+
+            foreach (StatDrawEntry e in ShuttleStats.BuildSafe(def, this, effective, bonus))
+            {
+                yield return e;
+            }
+        }
+    }
+
+    // Cargo mass and range come from vanilla's transporter and launchable comps, neither of which
+    // reports anything to the info card - so a shuttle's build card shows no capacity, no range and
+    // no seats. We fill that in for any craft carrying typed capacity, and use the same list for the
+    // built craft's own info card so the two always agree.
+    internal static class ShuttleStats
+    {
+        // A stat provider must never be able to break the info card. If ours throws, RimWorld's
+        // gather aborts with the entry list already assigned but its parallel value list left short,
+        // so StatsReportUtility.DrawStatsWorker then indexes past the end on EVERY later frame - and
+        // the card stays blank for every thing in the game, not just ours, until the dialog resets.
+        // Collect into a list behind a catch so a fault here costs a few stat lines and nothing else.
+        public static List<StatDrawEntry> BuildSafe(ThingDef def, CompProperties_TypedShuttleCapacity caps,
+            int effectiveBandwidth, int bandwidthBonus)
+        {
+            List<StatDrawEntry> entries = new List<StatDrawEntry>();
+            if (def == null) return entries;
+
+            try
+            {
+                entries.AddRange(Build(def, caps, effectiveBandwidth, bandwidthBonus));
+            }
+            catch (System.Exception e)
+            {
+                entries.Clear();
+                Log.ErrorOnce("[OSV] Failed building shuttle stats for " + def.defName + ": " + e, 0x05F1A11E);
+            }
+            return entries;
+        }
+
+        private static IEnumerable<StatDrawEntry> Build(ThingDef def, CompProperties_TypedShuttleCapacity caps,
+            int effectiveBandwidth, int bandwidthBonus)
+        {
+            CompProperties_Transporter transporter = def.GetCompProperties<CompProperties_Transporter>();
+            if (transporter != null)
+            {
+                yield return new StatDrawEntry(StatCategoryDefOf.Building, "Cargo capacity",
+                    transporter.massCapacity.ToString("F0") + " kg",
+                    "How much cargo this craft can carry. Crew and mechs are counted separately and do "
+                    + "not use up this allowance.", 4907);
+            }
+
+            int tiles = MaxRangeTiles(def);
+            if (tiles > 0)
+            {
+                yield return new StatDrawEntry(StatCategoryDefOf.Building, "Maximum range",
+                    tiles + " tiles",
+                    "How far this craft can fly on a full fuel load, one way.", 4906);
+            }
+
+            if (caps == null) yield break;
+
+            if (caps.noPawns)
+            {
+                yield return new StatDrawEntry(StatCategoryDefOf.Building, "Passenger capacity",
+                    "None (autonomous)",
+                    "This craft is autonomous and carries no crew - it launches and returns on its own.", 4905);
+            }
+            else if (caps.requireMechanitor)
+            {
+                yield return new StatDrawEntry(StatCategoryDefOf.Building, "Crew capacity",
+                    caps.maxColonists + " (mechanitor only)",
+                    "Only a mechanitor may pilot this craft.", 4905);
+            }
+            else if (caps.maxColonists >= 1)
+            {
+                yield return new StatDrawEntry(StatCategoryDefOf.Building, "Passenger capacity",
+                    caps.maxColonists.ToString(),
+                    "The maximum number of colonist passengers this shuttle can carry.", 4905);
+            }
+
+            if (caps.mechBandwidthCapacity > 0)
+            {
+                string val = effectiveBandwidth + " bandwidth";
+                if (bandwidthBonus > 0)
+                {
+                    val += " (base " + caps.mechBandwidthCapacity + " + " + bandwidthBonus + " researched)";
+                }
+                yield return new StatDrawEntry(StatCategoryDefOf.Building, "Mech bay capacity",
+                    val,
+                    "Mechs are carried against a bandwidth budget - each mech's bandwidth cost "
+                    + "(e.g. cleansweeper 1, tunneler 3). The total carried must not exceed this. "
+                    + "Mech-bay expansion research raises this budget.", 4904);
+            }
+            else
+            {
+                // Stated rather than omitted, so craft can be compared from the architect menu
+                // without building one of each. "None" rather than 0 - a zero reads like a mech bay
+                // that is broken or not yet researched.
+                yield return new StatDrawEntry(StatCategoryDefOf.Building, "Mech bay capacity",
+                    "None",
+                    "This craft has no mech bay and cannot carry mechanoids.", 4904);
+            }
+        }
+
+        // A fixed cap if the craft declares one, otherwise whatever a full tank buys.
+        private static int MaxRangeTiles(ThingDef def)
+        {
+            CompProperties_Launchable launchable = def.GetCompProperties<CompProperties_Launchable>();
+            if (launchable == null) return -1;
+            if (launchable.fixedLaunchDistanceMax >= 0) return launchable.fixedLaunchDistanceMax;
+
+            CompProperties_Refuelable fuel = def.GetCompProperties<CompProperties_Refuelable>();
+            if (fuel == null || launchable.fuelPerTile <= 0f) return -1;
+            return Mathf.FloorToInt(fuel.fuelCapacity / launchable.fuelPerTile);
+        }
     }
 
     // DefOf for the mech-bay expansion research (Biotech-only). Each finished tier raises the
@@ -195,44 +322,11 @@ namespace OdysseyShuttleVariants
             return lines.Count > 0 ? string.Join("\n", lines.ToArray()) : null;
         }
 
-        // Shown in the info card ("i" window) under Building.
-        public override IEnumerable<StatDrawEntry> SpecialDisplayStats()
-        {
-            foreach (StatDrawEntry e in base.SpecialDisplayStats())
-            {
-                yield return e;
-            }
-
-            if (Props.noPawns)
-            {
-                yield return new StatDrawEntry(StatCategoryDefOf.Building, "Passenger capacity",
-                    "None (autonomous)",
-                    "This craft is autonomous and carries no crew - it launches and returns on its own.", 4905);
-            }
-            else if (Props.requireMechanitor)
-            {
-                yield return new StatDrawEntry(StatCategoryDefOf.Building, "Crew capacity",
-                    Props.maxColonists + " (mechanitor only)",
-                    "Only a mechanitor may pilot this craft.", 4905);
-            }
-            else if (Props.maxColonists >= 1)
-            {
-                yield return new StatDrawEntry(StatCategoryDefOf.Building, "Passenger capacity",
-                    Props.maxColonists.ToString(),
-                    "The maximum number of colonist passengers this shuttle can carry.", 4905);
-            }
-
-            if (Props.mechBandwidthCapacity > 0)
-            {
-                string val = EffectiveMechBandwidth + " bandwidth";
-                int bonus = MechBandwidthBonus();
-                if (bonus > 0) val += " (base " + Props.mechBandwidthCapacity + " + " + bonus + " researched)";
-                yield return new StatDrawEntry(StatCategoryDefOf.Building, "Mech bay capacity",
-                    val,
-                    "Mechs are carried against a bandwidth budget - each mech's bandwidth cost "
-                    + "(e.g. cleansweeper 1, tunneler 3). The total carried must not exceed this. "
-                    + "Mech-bay expansion research raises this budget.", 4904);
-            }
-        }
+        // No SpecialDisplayStats override here on purpose. A built thing's info card gathers from
+        // BOTH thing.def.SpecialDisplayStats (which walks def.comps and reaches our CompProperties
+        // version) AND ThingWithComps.SpecialDisplayStats (which reaches the comp instance), so
+        // implementing it in both places listed every stat twice. The CompProperties version reads
+        // the mech-bay research from global game state, so it is correct for built craft as well as
+        // for the architect menu's build preview.
     }
 }
