@@ -49,6 +49,12 @@ https://steamcommunity.com/sharedfiles/filedetails/?id=3756377821
 Requires Odyssey. The Mechanitor Shuttle and Transport Drone additionally require Biotech.
 
 CHANGES
+1.0.3
+- Fixed a bug in this mod that could leave the info card ("i") blank. It was our fault: the mod threw an error while adding its stats, which stopped the card drawing for everything in the game, not just these shuttles, until it was reopened. Thanks to Sebster for reporting it.
+- The info card and the architect menu now show cargo capacity, maximum range, passenger capacity and mech bay capacity, for both built craft and the build preview.
+- Mech bay capacity in the build preview now reflects completed mech-bay expansion research instead of always showing the base figure.
+- Painting is temporarily disabled on this mod's craft. The colour masks are auto-generated and the paint lands untidily, so the option is off until they have been reworked.
+
 1.0.2
 - Typed capacity can now be applied to any player shuttle, including craft from other mods, from the mod options page. Your other mods are untouched until you opt a craft in, and changes take effect on restart.
 

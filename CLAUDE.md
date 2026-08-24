@@ -68,6 +68,9 @@ Remaining:
    Plan: first re-tune target colour + tolerance PER CRAFT aiming for ~90% auto; only go fully manual
    (hand-edit each mask, red = paints / black = keeps colour, via the remask.py preview/apply loop) if
    that falls short.
+   **Painting is currently DISABLED** (`paintable false` on `OSV_ShuttleBase`, 1.0.3) so the mod does
+   not ship a feature that shows the flaw off. **Re-enable it as part of this work** - otherwise the
+   masks get fixed and the option stays quietly switched off.
 
 Recently landed (implementation notes):
 - **Mech charging at the Mechanitor shuttle** (`CompMechChargerShuttle` + `JobDriver_MechChargeAtShuttle` +
