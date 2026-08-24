@@ -27,9 +27,23 @@ namespace OdysseyShuttleVariants
         public bool requireMechanitor;
         public bool noPawns;
 
-        // Seeded from the craft as it already is, so a freshly-created entry is a no-op.
+        // Seeded from what the craft SHIPS with, not from the def as it currently stands - applying
+        // an override overwrites the def's values, so reading them back would just return the last
+        // override and "Reset" would never restore anything.
         public void PrefillFrom(ThingDef def)
         {
+            if (ShuttleCapacityOverrides.Shipped.TryGetValue(def.defName,
+                out ShuttleCapacityOverrides.ShippedValues shipped))
+            {
+                maxColonists = shipped.maxColonists;
+                mechBandwidth = shipped.mechBandwidth;
+                requireMechanitor = shipped.requireMechanitor;
+                noPawns = shipped.noPawns;
+                massCapacity = shipped.massCapacity;
+                return;
+            }
+
+            // No snapshot (a craft added after startup): fall back to the def as it stands.
             CompProperties_TypedShuttleCapacity caps =
                 def.GetCompProperties<CompProperties_TypedShuttleCapacity>();
             CompProperties_Transporter transporter = def.GetCompProperties<CompProperties_Transporter>();

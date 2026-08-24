@@ -21,14 +21,38 @@ namespace OdysseyShuttleVariants
         // one adds the same comp and would otherwise make an overridden craft look built-in.
         public static readonly HashSet<string> NativeTypedCapacity = new HashSet<string>();
 
+        // What each craft ships with, captured before any override touches it. Applying an override
+        // writes straight onto the def's shared CompProperties, which destroys the original values -
+        // so without this snapshot "Reset" would restore whatever was last applied rather than what
+        // the craft is actually meant to be.
+        public sealed class ShippedValues
+        {
+            public int maxColonists;
+            public int mechBandwidth;
+            public bool requireMechanitor;
+            public bool noPawns;
+            public float massCapacity;
+        }
+
+        public static readonly Dictionary<string, ShippedValues> Shipped = new Dictionary<string, ShippedValues>();
+
         static ShuttleCapacityOverrides()
         {
             foreach (ThingDef def in EligibleShuttles())
             {
-                if (def.GetCompProperties<CompProperties_TypedShuttleCapacity>() != null)
+                CompProperties_TypedShuttleCapacity caps =
+                    def.GetCompProperties<CompProperties_TypedShuttleCapacity>();
+                if (caps != null) NativeTypedCapacity.Add(def.defName);
+
+                CompProperties_Transporter transporter = def.GetCompProperties<CompProperties_Transporter>();
+                Shipped[def.defName] = new ShippedValues
                 {
-                    NativeTypedCapacity.Add(def.defName);
-                }
+                    maxColonists = caps?.maxColonists ?? -1,
+                    mechBandwidth = caps?.mechBandwidthCapacity ?? 0,
+                    requireMechanitor = caps?.requireMechanitor ?? false,
+                    noPawns = caps?.noPawns ?? false,
+                    massCapacity = transporter?.massCapacity ?? -1f,
+                };
             }
 
             Apply();
