@@ -37,13 +37,6 @@ namespace OdysseyShuttleVariants
     {
         public CompProperties_MechChargerShuttle Props => (CompProperties_MechChargerShuttle)props;
 
-        // Registry of every spawned charger shuttle, so a low mech can find one without relying on a
-        // region-stored ThingRequestGroup. In multiplayer all clients spawn/despawn in the same
-        // deterministic order, so this list is identical across clients; the charger search still
-        // tiebreaks on thingIDNumber to stay order-independent. See Patch_JobGiver_GetEnergy_Charger.
-        private static readonly List<CompMechChargerShuttle> spawnedChargers = new List<CompMechChargerShuttle>();
-        public static IReadOnlyList<CompMechChargerShuttle> AllSpawned => spawnedChargers;
-
         // Off by default (charging drains the fuel the shuttle needs to fly home - opt-in). Scribed so
         // it survives save/reload and flights.
         private bool chargingEnabled;
@@ -146,13 +139,13 @@ namespace OdysseyShuttleVariants
         public override void PostSpawnSetup(bool respawningAfterLoad)
         {
             base.PostSpawnSetup(respawningAfterLoad);
-            if (!spawnedChargers.Contains(this)) spawnedChargers.Add(this);
+            parent.Map.GetComponent<MapComponent_ShuttleChargers>()?.Register(this);
         }
 
         public override void PostDeSpawn(Map map, DestroyMode mode = DestroyMode.Vanish)
         {
             base.PostDeSpawn(map, mode);
-            spawnedChargers.Remove(this);
+            map.GetComponent<MapComponent_ShuttleChargers>()?.Deregister(this);
             chargingMechs.Clear();
         }
 
@@ -232,5 +225,28 @@ namespace OdysseyShuttleVariants
             // Same bundled-wire material the vanilla mech charger draws its cable with.
             public static readonly Material Wire = MaterialPool.MatFrom("Other/BundledWires", ShaderDatabase.Transparent, Color.white);
         }
+    }
+
+    // Charger shuttles currently spawned on this map, so a low mech can find one without a
+    // region-stored ThingRequestGroup. Scoped to the map, so it never outlives its game; rebuilt as
+    // shuttles spawn, so it is not saved. Every multiplayer client spawns and despawns things in
+    // the same order, so the list is identical across clients, and the charger search tiebreaks on
+    // thingIDNumber besides. See Patch_JobGiver_GetEnergy_Charger.
+    public class MapComponent_ShuttleChargers : MapComponent
+    {
+        private readonly List<CompMechChargerShuttle> chargers = new List<CompMechChargerShuttle>();
+
+        public MapComponent_ShuttleChargers(Map map) : base(map)
+        {
+        }
+
+        public IReadOnlyList<CompMechChargerShuttle> Chargers => chargers;
+
+        public void Register(CompMechChargerShuttle charger)
+        {
+            if (!chargers.Contains(charger)) chargers.Add(charger);
+        }
+
+        public void Deregister(CompMechChargerShuttle charger) => chargers.Remove(charger);
     }
 }

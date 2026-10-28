@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using RimWorld;
@@ -115,14 +116,17 @@ namespace OdysseyShuttleVariants
         // Identifies the effective configuration, so a multiplayer mismatch can be spotted in the log
         // rather than showing up later as a desync. Capacity is baked into the defs at startup, so it
         // cannot be renegotiated mid-session - every client simply has to start with the same numbers.
+        // The value is the same on every machine and every launch: keys are ordered ordinally, not by
+        // the system culture, and hashed with a fixed algorithm rather than the runtime's per-process
+        // string hash.
         public int ConfigHash()
         {
             int hash = 17;
-            foreach (string key in overrides.Keys.OrderBy(k => k))
+            foreach (string key in overrides.Keys.OrderBy(k => k, StringComparer.Ordinal))
             {
                 ShuttleOverride ov = overrides[key];
                 if (!ov.enabled) continue;
-                hash = hash * 31 + key.GetHashCode();
+                hash = hash * 31 + GenText.StableStringHash(key);
                 hash = hash * 31 + ov.maxColonists;
                 hash = hash * 31 + Mathf.RoundToInt(ov.massCapacity);
                 hash = hash * 31 + ov.mechBandwidth;

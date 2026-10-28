@@ -575,18 +575,19 @@ namespace OdysseyShuttleVariants
         }
 
         // Nearest reachable landed mechanitor shuttle that can charge this mech right now. Iterates the
-        // spawned-charger registry with a deterministic (distance, thingIDNumber) tiebreak so every MP
-        // client picks the same one.
+        // mech's map's charger registry with a deterministic (distance, thingIDNumber) tiebreak so every
+        // MP client picks the same one.
         private static CompMechChargerShuttle FindShuttleCharger(Pawn mech)
         {
             CompMechChargerShuttle best = null;
             float bestDist = float.MaxValue;
             int bestId = int.MaxValue;
-            IReadOnlyList<CompMechChargerShuttle> all = CompMechChargerShuttle.AllSpawned;
+            IReadOnlyList<CompMechChargerShuttle> all = mech.Map?.GetComponent<MapComponent_ShuttleChargers>()?.Chargers;
+            if (all == null) return null;
             for (int i = 0; i < all.Count; i++)
             {
                 CompMechChargerShuttle c = all[i];
-                if (c.parent.Map != mech.Map || !c.CanChargeNow(mech)) continue;
+                if (!c.CanChargeNow(mech)) continue;
                 if (!mech.CanReach(c.parent, PathEndMode.Touch, Danger.Deadly)) continue;
                 if (!c.FreeChargeCellFor(mech).IsValid) continue;
 
