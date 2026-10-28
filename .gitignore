@@ -2,6 +2,8 @@
 # Harmony mod / Prepatcher provides the runtime 0Harmony.dll)
 Assemblies/*.dll
 Assemblies/*.pdb
+1.6/Assemblies/
+1.7/Assemblies/
 [Oo]bj/
 [Bb]in/
 *.csproj.user
