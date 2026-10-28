@@ -6,12 +6,6 @@ using Verse;
 
 namespace OdysseyShuttleVariants
 {
-    // A transport drone parked on the world map. Because the autonomous drone carries no colonist,
-    // a normal shuttle would lose its cargo on an empty tile (vanilla forms a caravan, which needs a
-    // pawn owner). Instead, our DroneLand arrival action drops the drone into one of these world
-    // objects: it holds the shuttle Thing + its cargo (an ActiveTransporterInfo, exactly how a shuttle
-    // is carried in flight), survives save/load, and lives on the world map so abandoning the origin
-    // colony map can't strand it. From here the player can recall it home or send it onward.
     // The map a drone "forms a camp" on. Vanilla WorldObjectDefOf.Camp auto-removes its map (and spawns
     // an AbandonedCamp) the instant it has no colonists - fatal for a pawnless drone, which would lose the
     // ship. This custom MapParent instead keeps the map while the drone ship (any player building) or a
@@ -88,11 +82,29 @@ namespace OdysseyShuttleVariants
         }
     }
 
+    // A transport drone parked on the world map. Because the autonomous drone carries no colonist,
+    // a normal shuttle would lose its cargo on an empty tile (vanilla forms a caravan, which needs a
+    // pawn owner). Instead, our DroneLand arrival action drops the drone into one of these world
+    // objects: it holds the shuttle Thing + its cargo (an ActiveTransporterInfo, exactly how a shuttle
+    // is carried in flight), survives save/load, and lives on the world map so abandoning the origin
+    // colony map can't strand it. From here the player can recall it home or send it onward.
     public class WorldObject_LandedDrone : WorldObject, IThingHolder
     {
         // The shuttle building + cargo. Mirrors TravellingTransporters' per-pod container; reused
         // verbatim when we re-launch (no re-packing needed - the shuttle is already SetShuttle'd).
         private ActiveTransporterInfo contents;
+
+        // Parks a player shuttle, with its cargo and crew, as a landed world object on the tile.
+        public static WorldObject_LandedDrone ParkAt(PlanetTile tile, ActiveTransporterInfo info)
+        {
+            WorldObject_LandedDrone landed =
+                (WorldObject_LandedDrone)WorldObjectMaker.MakeWorldObject(OSV_WorldObjectDefOf.OSV_LandedDrone);
+            landed.SetFaction(Faction.OfPlayer);
+            landed.Tile = tile;
+            landed.SetContents(info);
+            Find.WorldObjects.Add(landed);
+            return landed;
+        }
 
         public Building_PassengerShuttle Shuttle => contents?.GetShuttle() as Building_PassengerShuttle;
 
@@ -148,7 +160,7 @@ namespace OdysseyShuttleVariants
             // launch runs through our LaunchTo (the no-map, world-object launch path, since vanilla
             // TryLaunch would try to spawn a skyfaller on a map we don't have). Our Harmony float-menu
             // patch adds the "Land drone here" option for empty tiles; colonies/settlements keep their
-            // normal options. (This replaced the old bespoke "Recall home"/"Send to tile" gizmos.)
+            // normal options.
             Command_Action launch = new Command_Action
             {
                 defaultLabel = "CommandLaunchGroup".Translate(),
@@ -195,8 +207,8 @@ namespace OdysseyShuttleVariants
                 ActiveTransporterInfo info = contents;
                 contents = null;
 
-                // Reuses the same util as recall-to-colony: respawns the shuttle building + dumps cargo
-                // into it, on the camp map.
+                // Respawns the shuttle building with its cargo aboard on the camp map, as a landing at a
+                // colony does.
                 Thing landed = TransportersArrivalActionUtility.DropShuttle(info, map, map.Center);
 
                 if (!Destroyed) Destroy();

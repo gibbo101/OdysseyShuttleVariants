@@ -8,7 +8,7 @@ using Verse;
 
 namespace OdysseyShuttleVariants
 {
-    // Compatibility with "Instant Loot Shuttle" (AEEDAA, Workshop 3646387656).
+    // Compatibility with "Instant Loot Shuttle" (Workshop 3646387656).
     //
     // That mod loads a shuttle in one click instead of through hauling jobs. It charges every selected
     // pawn's full body mass against the shuttle's capacity, in two separate places:
@@ -20,14 +20,14 @@ namespace OdysseyShuttleVariants
     //      exceeds capacity. Pawns are processed first and are already in the container by then, so a
     //      bail there strands the cargo and leaves the crew aboard.
     //
-    // On our craft crew is free - governed by the seat count, not the mass pool - so both charges are
-    // wrong here. Their arithmetic is correct for vanilla; we changed what pawn mass means on these
-    // craft, so the correction belongs on our side.
+    // On our craft crew is free - governed by the seat count, not the mass pool - so both charges
+    // over-count here. Their arithmetic is right for vanilla; it is the meaning of pawn mass on these
+    // craft that differs, so the correction lives on our side.
     //
-    // (2) has no float to postfix, and rewriting their loop would rot the moment they touch it.
-    // Instead we grant the transporter exactly the capacity their loop is about to over-charge, for
-    // the duration of that one call, and withdraw it immediately after. Their maths then works out
-    // untouched, with no assumption about the order they process the selection in.
+    // (2) has no float to postfix and its loop is left unpatched. Instead we grant the transporter
+    // exactly the capacity their loop is about to over-charge, for the duration of that one call, and
+    // withdraw it immediately after. Their maths then works out untouched, with no assumption about
+    // the order they process the selection in.
     //
     // Fully soft: with the mod absent - or its methods changed - nothing is patched and its behaviour
     // is left exactly as it is.
@@ -125,7 +125,7 @@ namespace OdysseyShuttleVariants
                 TransferableOneWay tr = transferables[i];
                 if (tr == null || tr.CountToTransfer <= 0) continue;
                 if (!(tr.AnyThing is Pawn rep)) continue;
-                if (!rep.RaceProps.Humanlike && !rep.RaceProps.IsMechanoid) continue;
+                if (!MassSplit.IsExcludedFromCargo(rep)) continue;
 
                 int already = 0;
                 List<Thing> things = tr.things;
@@ -148,8 +148,7 @@ namespace OdysseyShuttleVariants
             ref float __result)
         {
             if (__result <= 0f) return;
-            float crew = SelectionCrewMass(transporter, transferables);
-            if (crew > 0f) __result = Mathf.Max(__result - crew, 0f);
+            __result = MassSplit.Deduct(__result, SelectionCrewMass(transporter, transferables));
         }
 
         // (2) Load loop: hand each of our transporters the capacity its crew is about to consume.

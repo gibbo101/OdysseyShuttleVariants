@@ -18,9 +18,7 @@
       <WorkToBuild>26000</WorkToBuild>
     </statBases>
     <graphicData>
-      <graphicClass>Graphic_Multi</graphicClass>
       <texPath>Things/Building/OSV/DroneShuttle/DroneShuttle</texPath>
-      <shaderType>CutoutComplex</shaderType>
       <drawSize>(2.4,5)</drawSize>
       <shadowData>
         <volume>(1.2, 1.0, 3.5)</volume>
@@ -80,9 +78,7 @@
     <defName>OSV_DroneShuttleIncoming</defName>
     <label>transport drone (incoming)</label>
     <graphicData>
-      <graphicClass>Graphic_Multi</graphicClass>
       <texPath>Things/Building/OSV/DroneShuttle/DroneShuttle</texPath>
-      <shaderType>CutoutComplex</shaderType>
       <drawSize>(2.4,5)</drawSize>
     </graphicData>
   </ThingDef>
@@ -90,9 +86,7 @@
     <defName>OSV_DroneShuttleLeaving</defName>
     <label>transport drone (leaving)</label>
     <graphicData>
-      <graphicClass>Graphic_Multi</graphicClass>
       <texPath>Things/Building/OSV/DroneShuttle/DroneShuttle</texPath>
-      <shaderType>CutoutComplex</shaderType>
       <drawSize>(2.4,5)</drawSize>
     </graphicData>
   </ThingDef>
@@ -107,23 +101,17 @@
     <playerShuttle>true</playerShuttle>
   </TransportShipDef>
 
-  <ResearchProjectDef>
+  <ResearchProjectDef ParentName="OSV_ResearchBase">
     <defName>OSV_DroneShuttleTech</defName>
     <label>transport drone</label>
     <description>Autonomous flight control and lightweight drone frames, enabling construction of the transport drone.</description>
     <baseCost>4000</baseCost>
-    <techLevel>Spacer</techLevel>
-    <requiredResearchBuilding>HiTechResearchBench</requiredResearchBuilding>
-    <requiredResearchFacilities>
-      <li>MultiAnalyzer</li>
-    </requiredResearchFacilities>
     <prerequisites>
       <!-- Drone autonomy builds on advanced mech control: requires the Mechanitor Shuttle research AND
            vanilla High Mechtech. Both are Biotech-only, so the Drone requires Biotech too - intended. -->
       <li>OSV_MechShuttleTech</li>
       <li>HighMechtech</li>
     </prerequisites>
-    <tab>OSV_ShuttlesTab</tab>
     <researchViewX>3.0</researchViewX>
     <researchViewY>2.5</researchViewY>
   </ResearchProjectDef>

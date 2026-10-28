@@ -34,19 +34,25 @@ namespace OdysseyShuttleVariants
         {
             if (transporters.Count == 0) return;
 
-            // Shuttles are max1PerGroup, but merge any stragglers into the first to be safe.
-            for (int i = transporters.Count - 1; i >= 1; i--)
-            {
-                transporters[i].innerContainer.TryTransferAllToContainer(transporters[0].innerContainer, canMergeWithExistingStacks: true);
-            }
-
-            WorldObject_LandedDrone landed = (WorldObject_LandedDrone)WorldObjectMaker.MakeWorldObject(OSV_WorldObjectDefOf.OSV_LandedDrone);
-            landed.SetFaction(Faction.OfPlayer);
-            landed.Tile = tile;
-            landed.SetContents(transporters[0]);
-            Find.WorldObjects.Add(landed);
+            ActiveTransporterInfo info = DroneArrivalUtility.MergeIntoFirst(transporters);
+            WorldObject_LandedDrone landed = WorldObject_LandedDrone.ParkAt(tile, info);
 
             Messages.Message("The transport drone has landed and is holding its cargo.", landed, MessageTypeDefOf.TaskCompletion);
+        }
+    }
+
+    internal static class DroneArrivalUtility
+    {
+        // Shuttles are max1PerGroup, so an arriving group is a single transporter; any others are
+        // merged into the first, which is returned.
+        public static ActiveTransporterInfo MergeIntoFirst(List<ActiveTransporterInfo> transporters)
+        {
+            ActiveTransporterInfo first = transporters[0];
+            for (int i = transporters.Count - 1; i >= 1; i--)
+            {
+                transporters[i].innerContainer.TryTransferAllToContainer(first.innerContainer, canMergeWithExistingStacks: true);
+            }
+            return first;
         }
     }
 
@@ -82,13 +88,7 @@ namespace OdysseyShuttleVariants
         public override void Arrived(List<ActiveTransporterInfo> transporters, PlanetTile tile)
         {
             if (transporters.Count == 0) return;
-            ActiveTransporterInfo info = transporters[0];
-
-            // Consolidate any stragglers into the first transporter.
-            for (int i = transporters.Count - 1; i >= 1; i--)
-            {
-                transporters[i].innerContainer.TryTransferAllToContainer(info.innerContainer, canMergeWithExistingStacks: true);
-            }
+            ActiveTransporterInfo info = DroneArrivalUtility.MergeIntoFirst(transporters);
 
             // Pull the shuttle out so the gift covers only the cargo, then gift + put the shuttle back.
             Thing shuttle = info.RemoveShuttle();
@@ -96,11 +96,7 @@ namespace OdysseyShuttleVariants
             if (shuttle != null) info.SetShuttle(shuttle);
 
             // Drone persists (now empty) at the settlement tile, free to be sent on again.
-            WorldObject_LandedDrone landed = (WorldObject_LandedDrone)WorldObjectMaker.MakeWorldObject(OSV_WorldObjectDefOf.OSV_LandedDrone);
-            landed.SetFaction(Faction.OfPlayer);
-            landed.Tile = tile;
-            landed.SetContents(info);
-            Find.WorldObjects.Add(landed);
+            WorldObject_LandedDrone landed = WorldObject_LandedDrone.ParkAt(tile, info);
 
             Messages.Message("The transport drone delivered its cargo as a gift and is holding at the settlement.",
                 landed, MessageTypeDefOf.TaskCompletion);

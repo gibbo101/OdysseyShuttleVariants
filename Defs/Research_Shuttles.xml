@@ -4,59 +4,51 @@
   <!-- Unlock tree, rooted on vanilla Odyssey "Shuttles" (Odyssey is a hard mod requirement):
          Shuttles -> Troop -> Cargo -> Heavy
          Shuttles + StandardMechtech -> Mech -> Drone   (Biotech branch; Mech+Drone need Biotech)
-       Troop, Cargo and Heavy research are below; Drone lives in ThingDefs_Drone.xml, Mech in
-       Biotech/ThingDefs_MechShuttle.xml. -->
+       Troop, Cargo and Heavy research are below; Drone lives in Biotech/Defs/ThingDefs_Drone.xml,
+       Mech in Biotech/Defs/ThingDefs_MechShuttle.xml. -->
 
-  <ResearchProjectDef>
+  <!-- Bench, facility, tech level and tab shared by every project in the tree, Biotech ones included. -->
+  <ResearchProjectDef Name="OSV_ResearchBase" Abstract="True">
+    <techLevel>Spacer</techLevel>
+    <requiredResearchBuilding>HiTechResearchBench</requiredResearchBuilding>
+    <requiredResearchFacilities>
+      <li>MultiAnalyzer</li>
+    </requiredResearchFacilities>
+    <tab>OSV_ShuttlesTab</tab>
+  </ResearchProjectDef>
+
+  <ResearchProjectDef ParentName="OSV_ResearchBase">
     <defName>OSV_CargoShuttleTech</defName>
     <label>cargo shuttle</label>
     <description>Reinforced cargo frames and high-capacity transporter racks, enabling construction of the cargo shuttle.</description>
     <baseCost>2500</baseCost>
-    <techLevel>Spacer</techLevel>
-    <requiredResearchBuilding>HiTechResearchBench</requiredResearchBuilding>
-    <requiredResearchFacilities>
-      <li>MultiAnalyzer</li>
-    </requiredResearchFacilities>
     <prerequisites>
       <li>OSV_TroopShuttleTech</li>
     </prerequisites>
-    <tab>OSV_ShuttlesTab</tab>
     <researchViewX>2.5</researchViewX>
     <researchViewY>1.0</researchViewY>
   </ResearchProjectDef>
 
-  <ResearchProjectDef>
+  <ResearchProjectDef ParentName="OSV_ResearchBase">
     <defName>OSV_HeavyCargoShipTech</defName>
     <label>heavy cargo ship</label>
     <description>Oversized airframes, quad-engine mounts and reinforced load-bearing decks, enabling construction of the heavy cargo ship.</description>
     <baseCost>4000</baseCost>
-    <techLevel>Spacer</techLevel>
-    <requiredResearchBuilding>HiTechResearchBench</requiredResearchBuilding>
-    <requiredResearchFacilities>
-      <li>MultiAnalyzer</li>
-    </requiredResearchFacilities>
     <prerequisites>
       <li>OSV_CargoShuttleTech</li>
     </prerequisites>
-    <tab>OSV_ShuttlesTab</tab>
     <researchViewX>4.5</researchViewX>
     <researchViewY>1.0</researchViewY>
   </ResearchProjectDef>
 
-  <ResearchProjectDef>
+  <ResearchProjectDef ParentName="OSV_ResearchBase">
     <defName>OSV_TroopShuttleTech</defName>
     <label>troop shuttle</label>
     <description>Lightweight airframes and rapid-cycle launch systems, enabling construction of the troop shuttle.</description>
     <baseCost>2500</baseCost>
-    <techLevel>Spacer</techLevel>
-    <requiredResearchBuilding>HiTechResearchBench</requiredResearchBuilding>
-    <requiredResearchFacilities>
-      <li>MultiAnalyzer</li>
-    </requiredResearchFacilities>
     <prerequisites>
       <li>Shuttles</li>
     </prerequisites>
-    <tab>OSV_ShuttlesTab</tab>
     <researchViewX>0.5</researchViewX>
     <researchViewY>1.0</researchViewY>
   </ResearchProjectDef>

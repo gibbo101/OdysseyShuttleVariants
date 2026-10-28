@@ -41,7 +41,7 @@ namespace OdysseyShuttleVariants
             // build card can still show what a craft would actually be worth right now. Outside a
             // running game MechBandwidthBonus returns 0 and this falls back to the base figure.
             int bonus = CompTypedShuttleCapacity.MechBandwidthBonus();
-            int effective = mechBandwidthCapacity > 0 ? mechBandwidthCapacity + bonus : mechBandwidthCapacity;
+            int effective = CompTypedShuttleCapacity.EffectiveBandwidth(mechBandwidthCapacity);
 
             foreach (StatDrawEntry e in ShuttleStats.BuildSafe(def, this, effective, bonus))
             {
@@ -157,6 +157,39 @@ namespace OdysseyShuttleVariants
         }
     }
 
+    // What is aboard a shuttle, counted against its typed-capacity pools. `excluding` leaves out one
+    // pawn - the one whose own boarding is being checked. A craft without a transporter holds nothing.
+    internal static class ShuttleOccupancy
+    {
+        public static int Colonists(Thing shuttle, Pawn excluding = null)
+        {
+            ThingOwner contents = shuttle.TryGetComp<CompTransporter>()?.innerContainer;
+            int n = 0;
+            if (contents == null) return n;
+            for (int i = 0; i < contents.Count; i++)
+            {
+                if (contents[i] != excluding && contents[i] is Pawn p && p.IsColonist) n++;
+            }
+            return n;
+        }
+
+        // Summed vanilla BandwidthCost of the mechs aboard.
+        public static float MechBandwidth(Thing shuttle, Pawn excluding = null)
+        {
+            ThingOwner contents = shuttle.TryGetComp<CompTransporter>()?.innerContainer;
+            float total = 0f;
+            if (contents == null) return total;
+            for (int i = 0; i < contents.Count; i++)
+            {
+                if (contents[i] != excluding && contents[i] is Pawn p && p.RaceProps.IsMechanoid)
+                {
+                    total += p.GetStatValue(StatDefOf.BandwidthCost);
+                }
+            }
+            return total;
+        }
+    }
+
     // DefOf for the mech-bay expansion research (Biotech-only). Each finished tier raises the
     // mechanitor shuttle's carried-mech bandwidth budget - see CompTypedShuttleCapacity.EffectiveMechBandwidth.
     [DefOf]
@@ -176,26 +209,22 @@ namespace OdysseyShuttleVariants
         public CompProperties_TypedShuttleCapacity Props => (CompProperties_TypedShuttleCapacity)props;
 
         // Mech bandwidth budget as actually enforced: the def's base plus any completed mech-bay
-        // expansion research (+3 per tier). Research is per-save/global, so every mech shuttle shares
-        // the same upgraded budget. Returns the base (0) unchanged for non-mech craft. All cap reads
-        // (inspect line, info card, load-dialog readout + accept check, enter-job budget) use this.
-        public int EffectiveMechBandwidth
-        {
-            get
-            {
-                int cap = Props.mechBandwidthCapacity;
-                return cap > 0 ? cap + MechBandwidthBonus() : cap;
-            }
-        }
+        // expansion research. Research is per-save/global, so every mech shuttle shares the same
+        // upgraded budget. All cap reads (inspect line, info card, load-dialog readout + accept
+        // check, enter-job budget) go through this or EffectiveBandwidth.
+        public int EffectiveMechBandwidth => EffectiveBandwidth(Props.mechBandwidthCapacity);
+
+        // A base budget plus the research bonus; a base of 0 (not a mech carrier) stays 0.
+        public static int EffectiveBandwidth(int baseBandwidth) =>
+            baseBandwidth > 0 ? baseBandwidth + MechBandwidthBonus() : baseBandwidth;
 
         // +6 bandwidth per finished mech-bay expansion tier.
         public static int MechBandwidthBonus() => MechBayExpansionTiers() * 6;
 
         // Number of finished mech-bay expansion tiers (0-2). Also drives how many mechs can charge at a
         // landed mech shuttle at once (see CompMechChargerShuttle.EffectiveMaxSimultaneous).
-        // Guarded against a null game context: ResearchProjectDef.IsFinished reads Find.ResearchManager,
-        // which is null when this comp's stats are shown outside a live game (e.g. the architect/def
-        // info card) - without this guard that NREs the whole info-card stats list.
+        // Returns 0 outside a running game: ResearchProjectDef.IsFinished reads Find.ResearchManager,
+        // which is null there (e.g. a def info card opened from the main menu).
         public static int MechBayExpansionTiers()
         {
             if (Current.Game == null) return 0;
@@ -272,34 +301,6 @@ namespace OdysseyShuttleVariants
             }
         }
 
-        private int LoadedColonists()
-        {
-            int n = 0;
-            CompTransporter transporter = parent.TryGetComp<CompTransporter>();
-            if (transporter != null)
-            {
-                foreach (Thing t in transporter.innerContainer)
-                {
-                    if (t is Pawn p && p.IsColonist) n++;
-                }
-            }
-            return n;
-        }
-
-        private int LoadedMechBandwidth()
-        {
-            float total = 0f;
-            CompTransporter transporter = parent.TryGetComp<CompTransporter>();
-            if (transporter != null)
-            {
-                foreach (Thing t in transporter.innerContainer)
-                {
-                    if (t is Pawn p && p.RaceProps.IsMechanoid) total += p.GetStatValue(StatDefOf.BandwidthCost);
-                }
-            }
-            return Mathf.RoundToInt(total);
-        }
-
         public override string CompInspectStringExtra()
         {
             if (Props.noPawns)
@@ -311,26 +312,26 @@ namespace OdysseyShuttleVariants
 
             if (Props.requireMechanitor)
             {
-                lines.Add("Crew (mechanitor): " + LoadedColonists() + " / " + Props.maxColonists);
+                lines.Add("Crew (mechanitor): " + ShuttleOccupancy.Colonists(parent) + " / " + Props.maxColonists);
             }
             else if (Props.maxColonists >= 1)
             {
-                lines.Add("Passengers: " + LoadedColonists() + " / " + Props.maxColonists);
+                lines.Add("Passengers: " + ShuttleOccupancy.Colonists(parent) + " / " + Props.maxColonists);
             }
 
             if (Props.mechBandwidthCapacity > 0)
             {
-                lines.Add("Mechs: " + LoadedMechBandwidth() + " / " + EffectiveMechBandwidth + " bandwidth");
+                int loaded = Mathf.RoundToInt(ShuttleOccupancy.MechBandwidth(parent));
+                lines.Add("Mechs: " + loaded + " / " + EffectiveMechBandwidth + " bandwidth");
             }
 
             return lines.Count > 0 ? string.Join("\n", lines.ToArray()) : null;
         }
 
-        // No SpecialDisplayStats override here on purpose. A built thing's info card gathers from
-        // BOTH thing.def.SpecialDisplayStats (which walks def.comps and reaches our CompProperties
-        // version) AND ThingWithComps.SpecialDisplayStats (which reaches the comp instance), so
-        // implementing it in both places listed every stat twice. The CompProperties version reads
-        // the mech-bay research from global game state, so it is correct for built craft as well as
-        // for the architect menu's build preview.
+        // Stats come only from CompProperties_TypedShuttleCapacity.SpecialDisplayStats. A built
+        // thing's info card gathers from both def.SpecialDisplayStats (which walks def.comps) and
+        // ThingWithComps.SpecialDisplayStats (which reaches the comp instance), so an override here
+        // as well would list every stat twice. The CompProperties version reads the mech-bay research
+        // from global game state, so it is correct for built craft and the architect preview alike.
     }
 }

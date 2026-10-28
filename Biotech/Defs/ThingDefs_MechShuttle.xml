@@ -14,9 +14,7 @@
       <WorkToBuild>44000</WorkToBuild>
     </statBases>
     <graphicData>
-      <graphicClass>Graphic_Multi</graphicClass>
       <texPath>Things/Building/OSV/MechShuttle/MechShuttle</texPath>
-      <shaderType>CutoutComplex</shaderType>
       <drawSize>(2.4,5)</drawSize>
       <shadowData>
         <volume>(1.2, 1.0, 3.5)</volume>
@@ -86,9 +84,7 @@
     <defName>OSV_MechShuttleIncoming</defName>
     <label>mechanitor shuttle (incoming)</label>
     <graphicData>
-      <graphicClass>Graphic_Multi</graphicClass>
       <texPath>Things/Building/OSV/MechShuttle/MechShuttle</texPath>
-      <shaderType>CutoutComplex</shaderType>
       <drawSize>(2.4,5)</drawSize>
     </graphicData>
   </ThingDef>
@@ -96,9 +92,7 @@
     <defName>OSV_MechShuttleLeaving</defName>
     <label>mechanitor shuttle (leaving)</label>
     <graphicData>
-      <graphicClass>Graphic_Multi</graphicClass>
       <texPath>Things/Building/OSV/MechShuttle/MechShuttle</texPath>
-      <shaderType>CutoutComplex</shaderType>
       <drawSize>(2.4,5)</drawSize>
     </graphicData>
   </ThingDef>
@@ -113,21 +107,15 @@
     <playerShuttle>true</playerShuttle>
   </TransportShipDef>
 
-  <ResearchProjectDef>
+  <ResearchProjectDef ParentName="OSV_ResearchBase">
     <defName>OSV_MechShuttleTech</defName>
     <label>mechanitor shuttle</label>
     <description>Subcore-linked control racks and reinforced mech bays, enabling construction of the mechanitor shuttle.</description>
     <baseCost>3000</baseCost>
-    <techLevel>Spacer</techLevel>
-    <requiredResearchBuilding>HiTechResearchBench</requiredResearchBuilding>
-    <requiredResearchFacilities>
-      <li>MultiAnalyzer</li>
-    </requiredResearchFacilities>
     <prerequisites>
       <li>Shuttles</li>
       <li>StandardMechtech</li>
     </prerequisites>
-    <tab>OSV_ShuttlesTab</tab>
     <researchViewX>1.0</researchViewX>
     <researchViewY>2.5</researchViewY>
   </ResearchProjectDef>

@@ -65,12 +65,7 @@ namespace OdysseyShuttleVariants
             // Mirrors the first thing vanilla DropShuttle does, so world pawns aren't double-tracked.
             TransportersArrivalActionUtility.RemovePawnsFromWorldPawns(Gen.YieldSingle(transporter));
 
-            WorldObject_LandedDrone landed =
-                (WorldObject_LandedDrone)WorldObjectMaker.MakeWorldObject(OSV_WorldObjectDefOf.OSV_LandedDrone);
-            landed.SetFaction(Faction.OfPlayer);
-            landed.Tile = map.Tile;
-            landed.SetContents(transporter);
-            Find.WorldObjects.Add(landed);
+            WorldObject_LandedDrone landed = WorldObject_LandedDrone.ParkAt(map.Tile, transporter);
 
             Messages.Message(
                 shuttle.LabelCap + " could not land: no clear ground large enough for it. "

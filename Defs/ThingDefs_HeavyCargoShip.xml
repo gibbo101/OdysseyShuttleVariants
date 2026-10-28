@@ -10,7 +10,7 @@
     <description>A massive chemfuel hauler built on a reinforced load-bearing deck. It moves more freight than any other shuttle, at the cost of speed, range, and a heavy thirst for fuel.</description>
     <constructionSkillPrerequisite>8</constructionSkillPrerequisite>
     <!-- North-default orientation (nose up) is portrait, so the footprint is 6 wide x 10 deep;
-         rotating to east gives the 10x6 wide pad. Now fully rotatable like the rest of the fleet. -->
+         rotating to east gives the 10x6 wide pad. Rotatable like the rest of the fleet. -->
     <size>(6,10)</size>
     <!-- Side boarding, matching the fleet (Troop/Cargo board off the east flank). Calibrated off
          Cargo: size (4,6) -> (3,0,0); so size (6,10) -> east edge x=3, adjacent cell x=4. -->
@@ -20,9 +20,7 @@
       <WorkToBuild>60000</WorkToBuild>
     </statBases>
     <graphicData>
-      <graphicClass>Graphic_Multi</graphicClass>
       <texPath>Things/Building/OSV/HeavyCargoShip/HeavyCargoShip</texPath>
-      <shaderType>CutoutComplex</shaderType>
       <!-- north orientation: 5.8 wide x 10 deep (swaps to 10x5.8 when facing east). -->
       <drawSize>(5.8, 10)</drawSize>
       <shadowData>
@@ -83,9 +81,7 @@
     <defName>OSV_HeavyCargoShipIncoming</defName>
     <label>heavy cargo ship (incoming)</label>
     <graphicData>
-      <graphicClass>Graphic_Multi</graphicClass>
       <texPath>Things/Building/OSV/HeavyCargoShip/HeavyCargoShip</texPath>
-      <shaderType>CutoutComplex</shaderType>
       <drawSize>(5.8, 10)</drawSize>
     </graphicData>
   </ThingDef>
@@ -93,9 +89,7 @@
     <defName>OSV_HeavyCargoShipLeaving</defName>
     <label>heavy cargo ship (leaving)</label>
     <graphicData>
-      <graphicClass>Graphic_Multi</graphicClass>
       <texPath>Things/Building/OSV/HeavyCargoShip/HeavyCargoShip</texPath>
-      <shaderType>CutoutComplex</shaderType>
       <drawSize>(5.8, 10)</drawSize>
     </graphicData>
   </ThingDef>

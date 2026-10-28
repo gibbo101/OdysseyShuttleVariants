@@ -13,11 +13,10 @@ namespace OdysseyShuttleVariants
     // Our own hulls and the patched passenger shuttle therefore start ticked, because they already do;
     // craft from other mods start unticked. Un-ticking one of ours is a real choice - it strips typed
     // capacity and hands the craft back to the vanilla single mass pool. A craft never opened in the
-    // settings page is untouched entirely. We deliberately do NOT
-    // derive defaults from a craft's size or capacity: our own fleet shows there is no relationship
-    // to derive from - the Troop and Passenger shuttles share a 3x5 hull but carry 12 seats/100kg and
-    // 4 seats/250kg respectively. Seats and cargo encode a design intent, not a property of the hull,
-    // so guessing them for someone else's craft would silently rebalance their mod.
+    // settings page is untouched entirely. Defaults are never derived from a craft's size or capacity:
+    // seats and cargo encode a design intent, not a property of the hull (the Troop and Passenger
+    // shuttles share a 3x5 hull but carry 12 seats/100kg and 4 seats/250kg), so guessing them for
+    // another mod's craft would silently rebalance it.
     public class ShuttleOverride : IExposable
     {
         public bool enabled;
@@ -27,32 +26,32 @@ namespace OdysseyShuttleVariants
         public bool requireMechanitor;
         public bool noPawns;
 
-        // Seeded from what the craft SHIPS with, not from the def as it currently stands - applying
-        // an override overwrites the def's values, so reading them back would just return the last
-        // override and "Reset" would never restore anything.
+        // Seeded from what the craft SHIPS with, not from the def as it currently stands: an applied
+        // override has already overwritten the def's values.
         public void PrefillFrom(ThingDef def)
         {
-            if (ShuttleCapacityOverrides.Shipped.TryGetValue(def.defName,
+            // No snapshot (a craft added after startup): fall back to the def as it stands.
+            if (!ShuttleCapacityOverrides.Shipped.TryGetValue(def.defName,
                 out ShuttleCapacityOverrides.ShippedValues shipped))
             {
-                maxColonists = shipped.maxColonists;
-                mechBandwidth = shipped.mechBandwidth;
-                requireMechanitor = shipped.requireMechanitor;
-                noPawns = shipped.noPawns;
-                massCapacity = shipped.massCapacity;
-                return;
+                shipped = ShuttleCapacityOverrides.ShippedValues.ReadFrom(def);
             }
 
-            // No snapshot (a craft added after startup): fall back to the def as it stands.
-            CompProperties_TypedShuttleCapacity caps =
-                def.GetCompProperties<CompProperties_TypedShuttleCapacity>();
-            CompProperties_Transporter transporter = def.GetCompProperties<CompProperties_Transporter>();
+            maxColonists = shipped.maxColonists;
+            mechBandwidth = shipped.mechBandwidth;
+            requireMechanitor = shipped.requireMechanitor;
+            noPawns = shipped.noPawns;
+            massCapacity = shipped.massCapacity;
+        }
 
-            maxColonists = caps?.maxColonists ?? -1;
-            mechBandwidth = caps?.mechBandwidthCapacity ?? 0;
-            requireMechanitor = caps?.requireMechanitor ?? false;
-            noPawns = caps?.noPawns ?? false;
-            massCapacity = transporter?.massCapacity ?? -1f;
+        // A crewed craft profile: seats and cargo mass, no mech bay.
+        public void SetCrewedProfile(int seats, float cargoMass)
+        {
+            maxColonists = seats;
+            massCapacity = cargoMass;
+            mechBandwidth = 0;
+            requireMechanitor = false;
+            noPawns = false;
         }
 
         public void ExposeData()
@@ -102,11 +101,10 @@ namespace OdysseyShuttleVariants
                 ref keyBuffer, ref valueBuffer);
             if (overrides == null) overrides = new Dictionary<string, ShuttleOverride>();
 
-            // Version 1 wrote an entry per craft the moment the settings page was opened, with the
-            // tick meaning "has been customised" - so every craft, including ours, was stored as
-            // unticked. Under the current meaning an unticked craft is stripped of typed capacity,
-            // which would silently put our own fleet back on the vanilla mass limit. Old data is
-            // therefore discarded rather than reinterpreted; the defaults are correct anyway.
+            // In version 1 data the tick means "has been customised" and every craft opened in the
+            // page is stored unticked. Read under the current meaning, that would strip typed
+            // capacity from our own fleet, so older data is discarded rather than reinterpreted;
+            // the defaults are correct anyway.
             if (Scribe.mode != LoadSaveMode.Saving && settingsVersion < CurrentVersion)
             {
                 overrides.Clear();
@@ -141,9 +139,9 @@ namespace OdysseyShuttleVariants
 
         private Vector2 scroll;
 
-        // Capacity is baked into the defs at startup, so an edit made now does nothing until the game
-        // is restarted. The header says so, but a header is easy to skim past - so say it again, on
-        // the way out, and only when something actually changed.
+        // Capacity is baked into the defs at startup, so an edit takes effect only after a restart.
+        // The config hash taken when the page opens lets WriteSettings remind the player of that on
+        // close, and only when something actually changed.
         private bool hashCaptured;
         private int hashAtOpen;
 
@@ -267,13 +265,11 @@ namespace OdysseyShuttleVariants
             Rect presetRect = new Rect(row3.x + 320f, row3.y, 90f, 24f);
             if (Widgets.ButtonText(presetRect, "Troop"))
             {
-                ov.maxColonists = 12; ov.massCapacity = 100f; ov.mechBandwidth = 0;
-                ov.requireMechanitor = false; ov.noPawns = false;
+                ov.SetCrewedProfile(12, 100f);
             }
             if (Widgets.ButtonText(new Rect(presetRect.x + 94f, presetRect.y, 90f, 24f), "Hauler"))
             {
-                ov.maxColonists = 2; ov.massCapacity = 1250f; ov.mechBandwidth = 0;
-                ov.requireMechanitor = false; ov.noPawns = false;
+                ov.SetCrewedProfile(2, 1250f);
             }
             if (Widgets.ButtonText(new Rect(presetRect.x + 188f, presetRect.y, 90f, 24f), "Reset"))
             {
@@ -283,8 +279,5 @@ namespace OdysseyShuttleVariants
 
         // A collapsed row only needs its title and one line; an expanded one needs the fields.
         private static float RowHeight(ThingDef def) => OSVMod.Settings.For(def).enabled ? 144f : 56f;
-
-        // Craft that ship with typed capacity keep the values from their defs; anything else is
-        // seeded from what it already has, so ticking one changes nothing until a number is edited.
     }
 }

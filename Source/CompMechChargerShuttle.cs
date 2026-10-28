@@ -44,9 +44,6 @@ namespace OdysseyShuttleVariants
         private static readonly List<CompMechChargerShuttle> spawnedChargers = new List<CompMechChargerShuttle>();
         public static IReadOnlyList<CompMechChargerShuttle> AllSpawned => spawnedChargers;
 
-        // Public view of the ThingComp's parent (protected) for the job giver / driver.
-        public Thing Parent => parent;
-
         // Off by default (charging drains the fuel the shuttle needs to fly home - opt-in). Scribed so
         // it survives save/reload and flights.
         private bool chargingEnabled;
@@ -176,7 +173,7 @@ namespace OdysseyShuttleVariants
                 defaultLabel = "Mech charging",
                 defaultDesc = "Let this landed shuttle recharge nearby colony mechs, powered by its own "
                     + "chemfuel. This drains the fuel the shuttle needs to fly home.",
-                icon = ChargeIcon,
+                icon = Icons.Charge,
                 isActive = () => chargingEnabled,
                 toggleAction = delegate
                 {
@@ -235,6 +232,5 @@ namespace OdysseyShuttleVariants
             // Same bundled-wire material the vanilla mech charger draws its cable with.
             public static readonly Material Wire = MaterialPool.MatFrom("Other/BundledWires", ShaderDatabase.Transparent, Color.white);
         }
-        private static Texture2D ChargeIcon => Icons.Charge;
     }
 }

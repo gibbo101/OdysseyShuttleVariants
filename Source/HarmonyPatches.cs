@@ -263,7 +263,7 @@ namespace OdysseyShuttleVariants
                 __instance.AddFailCondition(delegate
                 {
                     if (pawn == null || !pawn.IsColonist) return false;
-                    if (ColonistsAboard(parent, pawn) < comp.Props.maxColonists) return false;
+                    if (ShuttleOccupancy.Colonists(parent, pawn) < comp.Props.maxColonists) return false;
                     Alert(parent, parent.LabelShortCap + " is at maximum occupancy (" + comp.Props.maxColonists + " passengers).");
                     return true;
                 });
@@ -277,42 +277,11 @@ namespace OdysseyShuttleVariants
                     if (pawn == null || !pawn.RaceProps.IsMechanoid) return false;
                     int cap = comp.EffectiveMechBandwidth;
                     float cost = pawn.GetStatValue(StatDefOf.BandwidthCost);
-                    if (MechBandwidthAboard(parent, pawn) + cost <= cap) return false;
+                    if (ShuttleOccupancy.MechBandwidth(parent, pawn) + cost <= cap) return false;
                     Alert(parent, parent.LabelShortCap + " mech bay is full (" + cap + " bandwidth).");
                     return true;
                 });
             }
-        }
-
-        private static int ColonistsAboard(ThingWithComps shuttle, Pawn excluding)
-        {
-            int n = 0;
-            CompTransporter transporter = shuttle.TryGetComp<CompTransporter>();
-            if (transporter != null)
-            {
-                foreach (Thing th in transporter.innerContainer)
-                {
-                    if (th != excluding && th is Pawn p && p.IsColonist) n++;
-                }
-            }
-            return n;
-        }
-
-        private static float MechBandwidthAboard(ThingWithComps shuttle, Pawn excluding)
-        {
-            float total = 0f;
-            CompTransporter transporter = shuttle.TryGetComp<CompTransporter>();
-            if (transporter != null)
-            {
-                foreach (Thing th in transporter.innerContainer)
-                {
-                    if (th != excluding && th is Pawn p && p.RaceProps.IsMechanoid)
-                    {
-                        total += p.GetStatValue(StatDefOf.BandwidthCost);
-                    }
-                }
-            }
-            return total;
         }
 
         // One global cooldown so the per-tick fail condition doesn't spam the alert.
@@ -437,10 +406,7 @@ namespace OdysseyShuttleVariants
                 if (m.IsPocketMap || seen.Contains(m.Parent)) continue;
                 string text = m.Parent.LabelCap;
                 if (GravshipUtility.TryGetNameOfGravshipOnMap(m, out string name)) text = text + " (" + name + ")";
-                MapParent parentLocal = m.Parent;
-                list.Add(new FloatMenuOption(text, delegate { CameraJumper.TryJumpAndSelect(parentLocal); },
-                    parentLocal.ExpandingIcon, parentLocal.ExpandingIconColor));
-                seen.Add(parentLocal);
+                AddOption(list, seen, m.Parent, text);
             }
             foreach (Quest quest in Find.QuestManager.questsInDisplayOrder)
             {
@@ -449,34 +415,33 @@ namespace OdysseyShuttleVariants
                     if (part is QuestPart_SpawnWorldObject sp && sp.worldObject != null
                         && !sp.worldObject.Destroyed && sp.worldObject.Spawned && !seen.Contains(sp.worldObject))
                     {
-                        WorldObject woLocal = sp.worldObject;
-                        list.Add(new FloatMenuOption(woLocal.LabelCap, delegate { CameraJumper.TryJumpAndSelect(woLocal); },
-                            woLocal.ExpandingIcon, woLocal.ExpandingIconColor));
-                        seen.Add(woLocal);
+                        AddOption(list, seen, sp.worldObject, sp.worldObject.LabelCap);
                     }
                 }
             }
             foreach (Caravan caravan in Find.WorldObjects.Caravans)
             {
                 if (seen.Contains(caravan)) continue;
-                Caravan caravanLocal = caravan;
-                list.Add(new FloatMenuOption(caravanLocal.LabelCap, delegate { CameraJumper.TryJumpAndSelect(caravanLocal); },
-                    caravanLocal.ExpandingIcon, caravanLocal.ExpandingIconColor));
-                seen.Add(caravanLocal);
+                AddOption(list, seen, caravan, caravan.LabelCap);
             }
             // Our addition: landed transport drones (world-map objects with no map of their own).
             foreach (WorldObject wo in Find.WorldObjects.AllWorldObjects)
             {
                 if (wo is WorldObject_LandedDrone && !seen.Contains(wo))
                 {
-                    WorldObject woLocal = wo;
-                    list.Add(new FloatMenuOption(woLocal.LabelCap, delegate { CameraJumper.TryJumpAndSelect(woLocal); },
-                        woLocal.ExpandingIcon, woLocal.ExpandingIconColor));
-                    seen.Add(woLocal);
+                    AddOption(list, seen, wo, wo.LabelCap);
                 }
             }
             if (list.Count == 0) list.Add(new FloatMenuOption("NothingToJumpTo".Translate(), null));
             Find.WindowStack.Add(new FloatMenu(list));
+        }
+
+        private static void AddOption(List<FloatMenuOption> list, HashSet<WorldObject> seen, WorldObject target,
+            string label)
+        {
+            list.Add(new FloatMenuOption(label, delegate { CameraJumper.TryJumpAndSelect(target); },
+                target.ExpandingIcon, target.ExpandingIconColor));
+            seen.Add(target);
         }
     }
 
@@ -490,20 +455,43 @@ namespace OdysseyShuttleVariants
 
     internal static class MassSplit
     {
-        // Mass of pawns that don't count as cargo (humanlike crew + mechs), summed the same way the
-        // game adds them (GetStatValue(Mass) * stackCount), to subtract cleanly from the mass total.
+        // Crew (humanlike) and mechs are carried outside the cargo pool.
+        public static bool IsExcludedFromCargo(Pawn p) => p.RaceProps.Humanlike || p.RaceProps.IsMechanoid;
+
+        // Mass of pawns that don't count as cargo, summed the same way the game adds them
+        // (GetStatValue(Mass) * stackCount), to subtract cleanly from the mass total.
         public static float ExcludedMass(ThingOwner container)
         {
             float m = 0f;
             for (int i = 0; i < container.Count; i++)
             {
-                if (container[i] is Pawn p && (p.RaceProps.Humanlike || p.RaceProps.IsMechanoid))
+                if (container[i] is Pawn p && IsExcludedFromCargo(p))
                 {
                     m += p.GetStatValue(StatDefOf.Mass) * p.stackCount;
                 }
             }
             return m;
         }
+
+        // Mass of the non-cargo pawns currently ticked to load in a transfer list.
+        public static float ExcludedMass(List<TransferableOneWay> transferables)
+        {
+            float m = 0f;
+            if (transferables == null) return m;
+            foreach (TransferableOneWay tr in transferables)
+            {
+                if (tr.CountToTransfer > 0 && tr.AnyThing is Pawn p && IsExcludedFromCargo(p))
+                {
+                    m += p.GetStatValue(StatDefOf.Mass) * tr.CountToTransfer;
+                }
+            }
+            return m;
+        }
+
+        // A mass total with the excluded mass taken off, never below zero. Unchanged when nothing
+        // is excluded.
+        public static float Deduct(float mass, float excluded) =>
+            excluded > 0f ? Mathf.Max(mass - excluded, 0f) : mass;
     }
 
     // The canonical mass source: covers the inspect line, CompLaunchable.CanLaunch's over-mass check,
@@ -514,8 +502,7 @@ namespace OdysseyShuttleVariants
         public static void Postfix(CompTransporter __instance, ref float __result)
         {
             if (__instance.parent.TryGetComp<CompTypedShuttleCapacity>() == null) return;
-            float excl = MassSplit.ExcludedMass(__instance.innerContainer);
-            if (excl > 0f) __result = Mathf.Max(__result - excl, 0f);
+            __result = MassSplit.Deduct(__result, MassSplit.ExcludedMass(__instance.innerContainer));
         }
     }
 
@@ -528,27 +515,14 @@ namespace OdysseyShuttleVariants
         public static void Postfix(Dialog_LoadTransporters __instance, ref float __result)
         {
             if (DialogAccess.GetComp(__instance) == null) return;
-            float excl = 0f;
-            List<TransferableOneWay> list = DialogAccess.Transferables(__instance);
-            if (list != null)
-            {
-                foreach (TransferableOneWay tr in list)
-                {
-                    if (tr.CountToTransfer > 0 && tr.AnyThing is Pawn p
-                        && (p.RaceProps.Humanlike || p.RaceProps.IsMechanoid))
-                    {
-                        excl += p.GetStatValue(StatDefOf.Mass) * tr.CountToTransfer;
-                    }
-                }
-            }
-            if (excl > 0f) __result = Mathf.Max(__result - excl, 0f);
+            __result = MassSplit.Deduct(__result, MassSplit.ExcludedMass(DialogAccess.Transferables(__instance)));
         }
     }
 
     // When one of our shuttles is carried in a caravan (it landed on an empty tile with colonists, who
     // became caravan members), re-launch goes through CaravanShuttleUtility, whose mass check sums the
-    // caravan pawns. Without this, a crewed Troop shuttle (100 kg cargo) couldn't re-launch because its
-    // 12 colonists' mass dwarfs the cap. Exclude crew + mech mass here too.
+    // caravan pawns. Excluding crew + mech mass there too lets a crewed Troop shuttle (100 kg cargo,
+    // 12 seats) re-launch rather than being blocked by its colonists' body mass.
     [HarmonyPatch(typeof(CaravanShuttleUtility), "GetCaravanShuttleMass")]
     public static class Patch_CaravanShuttleMass
     {
@@ -559,12 +533,12 @@ namespace OdysseyShuttleVariants
             float excl = 0f;
             foreach (Pawn p in caravan.PawnsListForReading)
             {
-                if (p.RaceProps.Humanlike || p.RaceProps.IsMechanoid)
+                if (MassSplit.IsExcludedFromCargo(p))
                 {
                     excl += p.GetStatValue(StatDefOf.Mass);
                 }
             }
-            if (excl > 0f) __result = Mathf.Max(__result - excl, 0f);
+            __result = MassSplit.Deduct(__result, excl);
         }
     }
 
@@ -595,7 +569,7 @@ namespace OdysseyShuttleVariants
             IntVec3 cell = charger.FreeChargeCellFor(pawn);
             if (!cell.IsValid) return;
 
-            Job job = JobMaker.MakeJob(OSV_JobDefOf.OSV_MechChargeAtShuttle, charger.Parent, cell);
+            Job job = JobMaker.MakeJob(OSV_JobDefOf.OSV_MechChargeAtShuttle, charger.parent, cell);
             job.overrideFacing = Rot4.South;
             __result = job;
         }
@@ -612,12 +586,12 @@ namespace OdysseyShuttleVariants
             for (int i = 0; i < all.Count; i++)
             {
                 CompMechChargerShuttle c = all[i];
-                if (c.Parent.Map != mech.Map || !c.CanChargeNow(mech)) continue;
-                if (!mech.CanReach(c.Parent, PathEndMode.Touch, Danger.Deadly)) continue;
+                if (c.parent.Map != mech.Map || !c.CanChargeNow(mech)) continue;
+                if (!mech.CanReach(c.parent, PathEndMode.Touch, Danger.Deadly)) continue;
                 if (!c.FreeChargeCellFor(mech).IsValid) continue;
 
-                float d = (c.Parent.Position - mech.Position).LengthHorizontalSquared;
-                int id = c.Parent.thingIDNumber;
+                float d = (c.parent.Position - mech.Position).LengthHorizontalSquared;
+                int id = c.parent.thingIDNumber;
                 if (d < bestDist || (d == bestDist && id < bestId))
                 {
                     bestDist = d;

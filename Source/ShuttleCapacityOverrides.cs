@@ -22,9 +22,8 @@ namespace OdysseyShuttleVariants
         public static readonly HashSet<string> NativeTypedCapacity = new HashSet<string>();
 
         // What each craft ships with, captured before any override touches it. Applying an override
-        // writes straight onto the def's shared CompProperties, which destroys the original values -
-        // so without this snapshot "Reset" would restore whatever was last applied rather than what
-        // the craft is actually meant to be.
+        // writes straight onto the def's shared CompProperties, so this snapshot is the only record
+        // of the original values that "Reset" restores.
         public sealed class ShippedValues
         {
             public int maxColonists;
@@ -32,6 +31,22 @@ namespace OdysseyShuttleVariants
             public bool requireMechanitor;
             public bool noPawns;
             public float massCapacity;
+
+            // The def's values as they stand, with the vanilla defaults for a craft lacking the comps.
+            public static ShippedValues ReadFrom(ThingDef def)
+            {
+                CompProperties_TypedShuttleCapacity caps =
+                    def.GetCompProperties<CompProperties_TypedShuttleCapacity>();
+                CompProperties_Transporter transporter = def.GetCompProperties<CompProperties_Transporter>();
+                return new ShippedValues
+                {
+                    maxColonists = caps?.maxColonists ?? -1,
+                    mechBandwidth = caps?.mechBandwidthCapacity ?? 0,
+                    requireMechanitor = caps?.requireMechanitor ?? false,
+                    noPawns = caps?.noPawns ?? false,
+                    massCapacity = transporter?.massCapacity ?? -1f,
+                };
+            }
         }
 
         public static readonly Dictionary<string, ShippedValues> Shipped = new Dictionary<string, ShippedValues>();
@@ -40,19 +55,11 @@ namespace OdysseyShuttleVariants
         {
             foreach (ThingDef def in EligibleShuttles())
             {
-                CompProperties_TypedShuttleCapacity caps =
-                    def.GetCompProperties<CompProperties_TypedShuttleCapacity>();
-                if (caps != null) NativeTypedCapacity.Add(def.defName);
-
-                CompProperties_Transporter transporter = def.GetCompProperties<CompProperties_Transporter>();
-                Shipped[def.defName] = new ShippedValues
+                if (def.GetCompProperties<CompProperties_TypedShuttleCapacity>() != null)
                 {
-                    maxColonists = caps?.maxColonists ?? -1,
-                    mechBandwidth = caps?.mechBandwidthCapacity ?? 0,
-                    requireMechanitor = caps?.requireMechanitor ?? false,
-                    noPawns = caps?.noPawns ?? false,
-                    massCapacity = transporter?.massCapacity ?? -1f,
-                };
+                    NativeTypedCapacity.Add(def.defName);
+                }
+                Shipped[def.defName] = ShippedValues.ReadFrom(def);
             }
 
             Apply();
@@ -128,9 +135,7 @@ namespace OdysseyShuttleVariants
 
             if (applied > 0 || reverted > 0)
             {
-                // The hash makes a multiplayer mismatch visible in the log. Capacity is baked in at
-                // startup and cannot be renegotiated mid-session, so all clients must simply start
-                // from the same numbers; two different hashes means a desync is coming.
+                // Two clients logging different hashes are running different capacities and will desync.
                 Log.Message("[OSV] Typed capacity: " + applied + " shuttle def(s) configured, "
                     + reverted + " reverted to the vanilla mass limit. Config hash: " + settings.ConfigHash());
             }
