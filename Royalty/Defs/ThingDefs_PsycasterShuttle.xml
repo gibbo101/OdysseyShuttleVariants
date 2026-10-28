@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+
+  <!-- Royalty-only. Inherits the OSV_ShuttleBase / skyfaller / research bases defined in the root
+       Defs (root always loads; this folder only loads when Royalty is active - see LoadFolders.xml). -->
+
+  <!-- =================== Psycaster Shuttle =================== -->
+  <ThingDef ParentName="OSV_ShuttleBase">
+    <defName>OSV_PsycasterShuttle</defName>
+    <label>psycaster shuttle</label>
+    <description>An ornate chemfuel shuttle in the Imperial style, built to carry a squad of psycasters into the field. Landed, its cabin serves as a dignified place to meditate, and it can project a resonance field that draws neural heat from your psycasters nearby - at the cost of some of the fuel it needs to fly home.</description>
+    <constructionSkillPrerequisite>7</constructionSkillPrerequisite>
+    <statBases>
+      <WorkToBuild>44000</WorkToBuild>
+      <MeditationFocusStrength>0.20</MeditationFocusStrength>
+    </statBases>
+    <graphicData>
+      <texPath>Things/Building/OSV/PsycasterShuttle/PsycasterShuttle</texPath>
+      <drawSize>(3, 5)</drawSize>
+      <shadowData>
+        <volume>(1.2, 1.0, 3.5)</volume>
+      </shadowData>
+    </graphicData>
+    <costList>
+      <Steel>200</Steel>
+      <Plasteel>180</Plasteel>
+      <Gold>40</Gold>
+      <ComponentSpacer>4</ComponentSpacer>
+      <ShuttleEngine>1</ShuttleEngine>
+    </costList>
+    <researchPrerequisites>
+      <li>OSV_PsycasterShuttleTech</li>
+    </researchPrerequisites>
+    <comps>
+      <li Class="CompProperties_Shuttle">
+        <shipDef>Ship_OSV_PsycasterShuttle</shipDef>
+      </li>
+      <li Class="OdysseyShuttleVariants.CompProperties_TypedShuttleCapacity">
+        <maxColonists>12</maxColonists>
+      </li>
+      <li Class="CompProperties_Launchable">
+        <fuelPerTile>2.0</fuelPerTile>
+        <minFuelCost>40</minFuelCost>
+        <skyfallerLeaving>OSV_PsycasterShuttleLeaving</skyfallerLeaving>
+        <worldObjectDef>OSV_TravelingShuttle</worldObjectDef>
+        <cooldownTicks>1500</cooldownTicks>
+        <fixedLaunchDistanceMax>150</fixedLaunchDistanceMax>
+        <cooldownEndedMessage>{0} is ready to launch again.</cooldownEndedMessage>
+      </li>
+      <li Class="CompProperties_Transporter">
+        <massCapacity>150</massCapacity>
+        <max1PerGroup>true</max1PerGroup>
+        <canChangeAssignedThingsAfterStarting>true</canChangeAssignedThingsAfterStarting>
+        <pawnLoadedSound>Shuttle_PawnLoaded</pawnLoadedSound>
+        <pawnExitSound>Shuttle_PawnExit</pawnExitSound>
+        <showMassInInspectString>true</showMassInInspectString>
+      </li>
+      <li Class="CompProperties_Refuelable">
+        <fuelCapacity>600</fuelCapacity>
+        <targetFuelLevelConfigurable>true</targetFuelLevelConfigurable>
+        <initialConfigurableTargetFuelLevel>600</initialConfigurableTargetFuelLevel>
+        <fuelFilter><thingDefs><li>Chemfuel</li></thingDefs></fuelFilter>
+        <fuelLabel>Chemfuel</fuelLabel>
+        <consumeFuelOnlyWhenUsed>true</consumeFuelOnlyWhenUsed>
+        <autoRefuelPercent>1</autoRefuelPercent>
+        <showFuelGizmo>true</showFuelGizmo>
+        <drawOutOfFuelOverlay>false</drawOutOfFuelOverlay>
+        <showAllowAutoRefuelToggle>true</showAllowAutoRefuelToggle>
+        <canEjectFuel>true</canEjectFuel>
+      </li>
+      <li Class="CompProperties_MeditationFocus">
+        <statDef>MeditationFocusStrength</statDef>
+        <focusTypes>
+          <li>Dignified</li>
+          <li>Artistic</li>
+        </focusTypes>
+      </li>
+      <li Class="OdysseyShuttleVariants.CompProperties_PsychicResonanceField">
+        <radius>12.9</radius>
+        <fuelPerDay>10</fuelPerDay>
+        <hediff>OSV_PsychicResonance</hediff>
+      </li>
+    </comps>
+  </ThingDef>
+
+  <ThingDef ParentName="OSV_ShuttleIncomingBase">
+    <defName>OSV_PsycasterShuttleIncoming</defName>
+    <label>psycaster shuttle (incoming)</label>
+    <graphicData>
+      <texPath>Things/Building/OSV/PsycasterShuttle/PsycasterShuttle</texPath>
+      <drawSize>(3, 5)</drawSize>
+    </graphicData>
+  </ThingDef>
+  <ThingDef ParentName="OSV_ShuttleLeavingBase">
+    <defName>OSV_PsycasterShuttleLeaving</defName>
+    <label>psycaster shuttle (leaving)</label>
+    <graphicData>
+      <texPath>Things/Building/OSV/PsycasterShuttle/PsycasterShuttle</texPath>
+      <drawSize>(3, 5)</drawSize>
+    </graphicData>
+  </ThingDef>
+
+  <TransportShipDef>
+    <defName>Ship_OSV_PsycasterShuttle</defName>
+    <label>psycaster shuttle</label>
+    <shipThing>OSV_PsycasterShuttle</shipThing>
+    <arrivingSkyfaller>OSV_PsycasterShuttleIncoming</arrivingSkyfaller>
+    <leavingSkyfaller>OSV_PsycasterShuttleLeaving</leavingSkyfaller>
+    <worldObject>OSV_TravelingShuttle</worldObject>
+    <playerShuttle>true</playerShuttle>
+  </TransportShipDef>
+
+  <!-- Applied by the resonance field to psycasters inside it and refreshed while they stay; it
+       lapses a few seconds after they leave the field or the field stops. -->
+  <HediffDef>
+    <defName>OSV_PsychicResonance</defName>
+    <label>psychic resonance</label>
+    <description>Standing within a psycaster shuttle's resonance field, which draws neural heat off faster.</description>
+    <hediffClass>HediffWithComps</hediffClass>
+    <isBad>false</isBad>
+    <defaultLabelColor>(0.6, 0.65, 1)</defaultLabelColor>
+    <stages>
+      <li>
+        <statFactors>
+          <PsychicEntropyRecoveryRate>1.5</PsychicEntropyRecoveryRate>
+        </statFactors>
+      </li>
+    </stages>
+    <comps>
+      <li Class="HediffCompProperties_Disappears">
+        <disappearsAfterTicks>400~400</disappearsAfterTicks>
+        <showRemainingTime>false</showRemainingTime>
+      </li>
+    </comps>
+  </HediffDef>
+
+  <ResearchProjectDef ParentName="OSV_ResearchBase">
+    <defName>OSV_PsycasterShuttleTech</defName>
+    <label>psycaster shuttle</label>
+    <description>Imperial cabin fittings and a psychic resonance array, enabling construction of the psycaster shuttle.</description>
+    <baseCost>3500</baseCost>
+    <prerequisites>
+      <li>OSV_TroopShuttleTech</li>
+    </prerequisites>
+    <researchViewX>2.5</researchViewX>
+    <researchViewY>0.0</researchViewY>
+  </ResearchProjectDef>
+
+</Defs>

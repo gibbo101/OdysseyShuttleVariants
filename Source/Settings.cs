@@ -26,6 +26,7 @@ namespace OdysseyShuttleVariants
         public int mechBandwidth;
         public bool requireMechanitor;
         public bool noPawns;
+        public PsychicFitOut psychic;
 
         // Seeded from what the craft SHIPS with, not from the def as it currently stands: an applied
         // override has already overwritten the def's values.
@@ -63,7 +64,18 @@ namespace OdysseyShuttleVariants
             Scribe_Values.Look(ref mechBandwidth, "mechBandwidth");
             Scribe_Values.Look(ref requireMechanitor, "requireMechanitor");
             Scribe_Values.Look(ref noPawns, "noPawns");
+            Scribe_Values.Look(ref psychic, "psychic", PsychicFitOut.AsShipped);
         }
+    }
+
+    // Whether a craft carries the psycaster shuttle's psychic fit-out (meditation focus and resonance
+    // field). Independent of the crew/mech/cargo tick, and stored as a choice against what the craft
+    // ships with, so settings saved before the option existed keep every craft as it ships.
+    public enum PsychicFitOut
+    {
+        AsShipped,
+        On,
+        Off,
     }
 
     public class OSVSettings : ModSettings
@@ -125,6 +137,7 @@ namespace OdysseyShuttleVariants
             foreach (string key in overrides.Keys.OrderBy(k => k, StringComparer.Ordinal))
             {
                 ShuttleOverride ov = overrides[key];
+                hash = hash * 31 + (int)ov.psychic;
                 if (!ov.enabled) continue;
                 hash = hash * 31 + GenText.StableStringHash(key);
                 hash = hash * 31 + ov.maxColonists;
@@ -187,6 +200,9 @@ namespace OdysseyShuttleVariants
             Widgets.Label(header,
                 "Apply the crew / mech / cargo split to any player shuttle, including craft from other mods. "
                 + "Anything left disabled keeps its normal behaviour, where a single mass limit covers everything.\n"
+                + (ShuttleCapacityOverrides.PsychicTemplate != null
+                    ? "Any craft can also be given the psycaster shuttle's meditation focus and resonance field. "
+                    : "")
                 + "Changes take effect on restart. In multiplayer every player must use identical settings.");
 
             float y = inRect.y + 64f;
@@ -218,9 +234,10 @@ namespace OdysseyShuttleVariants
             Rect inner = rect.ContractedBy(6f);
             ShuttleOverride ov = Settings.For(def);
 
-            Rect titleRect = new Rect(inner.x, inner.y, inner.width, 24f);
+            Rect titleRect = new Rect(inner.x, inner.y, inner.width - PsychicColumnWidth, 24f);
             bool wasEnabled = ov.enabled;
             Widgets.CheckboxLabeled(titleRect, def.LabelCap + "  (" + def.size.x + "x" + def.size.z + ")", ref ov.enabled);
+            DrawPsychicToggle(new Rect(inner.xMax - PsychicColumnWidth + 12f, inner.y, PsychicColumnWidth - 12f, 24f), def, ov);
 
             // Turning it on pre-fills from whatever the craft already has, so enabling alone changes nothing.
             if (ov.enabled && !wasEnabled) ov.PrefillFrom(def);
@@ -278,7 +295,24 @@ namespace OdysseyShuttleVariants
             if (Widgets.ButtonText(new Rect(presetRect.x + 188f, presetRect.y, 90f, 24f), "Reset"))
             {
                 ov.PrefillFrom(def);
+                ov.psychic = PsychicFitOut.AsShipped;
             }
+        }
+
+        private const float PsychicColumnWidth = 160f;
+
+        // Shown only while the psycaster shuttle exists to copy from (Royalty is active).
+        private static void DrawPsychicToggle(Rect rect, ThingDef def, ShuttleOverride ov)
+        {
+            if (ShuttleCapacityOverrides.PsychicTemplate == null) return;
+
+            bool on = ShuttleCapacityOverrides.HasPsychicFitOut(def, ov);
+            bool was = on;
+            Widgets.CheckboxLabeled(rect, "Psycaster", ref on);
+            TooltipHandler.TipRegion(rect, "Give this craft the psycaster shuttle's psychic fit-out: a dignified "
+                + "and artistic meditation focus, and a resonance field that speeds neural heat recovery for "
+                + "psycasters nearby.");
+            if (on != was) ov.psychic = on ? PsychicFitOut.On : PsychicFitOut.Off;
         }
 
         // A collapsed row only needs its title and one line; an expanded one needs the fields.

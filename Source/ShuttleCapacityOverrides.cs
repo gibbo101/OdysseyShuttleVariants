@@ -31,6 +31,7 @@ namespace OdysseyShuttleVariants
             public bool requireMechanitor;
             public bool noPawns;
             public float massCapacity;
+            public bool psychic;
 
             // The def's values as they stand, with the vanilla defaults for a craft lacking the comps.
             public static ShippedValues ReadFrom(ThingDef def)
@@ -45,11 +46,24 @@ namespace OdysseyShuttleVariants
                     requireMechanitor = caps?.requireMechanitor ?? false,
                     noPawns = caps?.noPawns ?? false,
                     massCapacity = transporter?.massCapacity ?? -1f,
+                    psychic = def.GetCompProperties<CompProperties_PsychicResonanceField>() != null,
                 };
             }
         }
 
         public static readonly Dictionary<string, ShippedValues> Shipped = new Dictionary<string, ShippedValues>();
+
+        // The psycaster shuttle, whose meditation focus, resonance field and focus strength are the
+        // psychic fit-out given to other craft. Null when Royalty is not active.
+        public static ThingDef PsychicTemplate => DefDatabase<ThingDef>.GetNamedSilentFail("OSV_PsycasterShuttle");
+
+        public static bool HasPsychicFitOut(ThingDef def, ShuttleOverride ov)
+        {
+            if (ov.psychic != PsychicFitOut.AsShipped) return ov.psychic == PsychicFitOut.On;
+            return Shipped.TryGetValue(def.defName, out ShippedValues shipped)
+                ? shipped.psychic
+                : def.GetCompProperties<CompProperties_PsychicResonanceField>() != null;
+        }
 
         static ShuttleCapacityOverrides()
         {
@@ -93,10 +107,14 @@ namespace OdysseyShuttleVariants
 
             int applied = 0;
             int reverted = 0;
+            int psychic = 0;
+            ThingDef template = PsychicTemplate;
             foreach (ThingDef def in EligibleShuttles())
             {
                 // Never opened in the settings page: leave the def exactly as it ships.
                 if (!settings.overrides.TryGetValue(def.defName, out ShuttleOverride ov)) continue;
+
+                if (template != null && ApplyPsychicFitOut(def, HasPsychicFitOut(def, ov), template)) psychic++;
 
                 if (!ov.enabled)
                 {
@@ -133,12 +151,38 @@ namespace OdysseyShuttleVariants
                 applied++;
             }
 
-            if (applied > 0 || reverted > 0)
+            if (applied > 0 || reverted > 0 || psychic > 0)
             {
                 // Two clients logging different hashes are running different capacities and will desync.
                 Log.Message("[OSV] Typed capacity: " + applied + " shuttle def(s) configured, "
-                    + reverted + " reverted to the vanilla mass limit. Config hash: " + settings.ConfigHash());
+                    + reverted + " reverted to the vanilla mass limit, " + psychic
+                    + " with the psycaster fit-out. Config hash: " + settings.ConfigHash());
             }
+        }
+
+        // Gives the def the template's meditation focus, resonance field and focus strength, or takes
+        // them away. A craft keeps any meditation focus of its own. Returns whether the def ends up
+        // carrying the fit-out.
+        private static bool ApplyPsychicFitOut(ThingDef def, bool wanted, ThingDef template)
+        {
+            CompProperties_PsychicResonanceField field = template.GetCompProperties<CompProperties_PsychicResonanceField>();
+            CompProperties_MeditationFocus focus = template.GetCompProperties<CompProperties_MeditationFocus>();
+            StatDef strength = StatDefOf.MeditationFocusStrength;
+            bool has = def.GetCompProperties<CompProperties_PsychicResonanceField>() != null;
+
+            if (wanted && !has)
+            {
+                if (def.comps == null) def.comps = new List<CompProperties>();
+                if (def.GetCompProperties<CompProperties_MeditationFocus>() == null) def.comps.Add(focus);
+                def.comps.Add(field);
+                StatUtility.SetStatValueInList(ref def.statBases, strength, template.GetStatValueAbstract(strength));
+            }
+            else if (!wanted && has)
+            {
+                def.comps.RemoveAll(c => c is CompProperties_PsychicResonanceField || c is CompProperties_MeditationFocus);
+                def.statBases?.RemoveAll(s => s.stat == strength);
+            }
+            return wanted;
         }
     }
 }

@@ -33,20 +33,14 @@ namespace OdysseyShuttleVariants
         }
     }
 
-    public class CompMechChargerShuttle : ThingComp
+    public class CompMechChargerShuttle : CompShuttleFuelledService
     {
         public CompProperties_MechChargerShuttle Props => (CompProperties_MechChargerShuttle)props;
-
-        // Off by default (charging drains the fuel the shuttle needs to fly home - opt-in). Scribed so
-        // it survives save/reload and flights.
-        private bool chargingEnabled;
 
         // Mechs currently pumping energy at this hull. Populated/cleared by the job driver on all
         // clients (jobs are MP-synced), so it stays deterministic. Used only for Count/Contains
         // (throttle + inspect), never iterated to drive sim state.
         private readonly HashSet<Pawn> chargingMechs = new HashSet<Pawn>();
-
-        public bool ChargingEnabled => chargingEnabled;
 
         public float ChargePerTick => Props.chargeRatePerDay / GenDate.TicksPerDay;
 
@@ -56,22 +50,14 @@ namespace OdysseyShuttleVariants
         public int EffectiveMaxSimultaneous =>
             Props.maxSimultaneousCharging + CompTypedShuttleCapacity.MechBayExpansionTiers();
 
-        private CompRefuelable fuelComp;
-        public CompRefuelable Fuel => fuelComp ?? (fuelComp = parent.GetComp<CompRefuelable>());
-
-        // MP-synced state setter (registered in MultiplayerCompat). Toggling the gizmo calls this so
-        // every client flips together; in singleplayer it just runs inline.
-        public void SetChargingEnabled(bool value)
-        {
-            chargingEnabled = value;
-        }
+        protected override string EnabledSaveKey => "OSV_chargingEnabled";
 
         // Is the hull able to (start) charging this mech right now? Mirrors the shape of vanilla
         // Building_MechCharger.CanPawnChargeCurrently: enabled, landed, has fuel, a free slot (unless
         // this mech already holds one), and the mech is one of ours.
         public bool CanChargeNow(Pawn mech)
         {
-            if (!chargingEnabled || !parent.Spawned) return false;
+            if (!Enabled || !parent.Spawned) return false;
             if (mech == null || !mech.IsColonyMech) return false;
             if (Fuel == null || !Fuel.HasFuel) return false;
             if (chargingMechs.Contains(mech)) return true;
@@ -149,38 +135,23 @@ namespace OdysseyShuttleVariants
             chargingMechs.Clear();
         }
 
-        public override void PostExposeData()
-        {
-            base.PostExposeData();
-            Scribe_Values.Look(ref chargingEnabled, "OSV_chargingEnabled", defaultValue: false);
-        }
-
         public override IEnumerable<Gizmo> CompGetGizmosExtra()
         {
             foreach (Gizmo g in base.CompGetGizmosExtra()) yield return g;
 
             if (!parent.Spawned) yield break;
 
-            yield return new Command_Toggle
-            {
-                defaultLabel = "Mech charging",
-                defaultDesc = "Let this landed shuttle recharge nearby colony mechs, powered by its own "
-                    + "chemfuel. This drains the fuel the shuttle needs to fly home.",
-                icon = Icons.Charge,
-                isActive = () => chargingEnabled,
-                toggleAction = delegate
-                {
-                    // Route through the MP-synced setter so all clients flip together.
-                    SetChargingEnabled(!chargingEnabled);
-                }
-            };
+            yield return ToggleGizmo("Mech charging",
+                "Let this landed shuttle recharge nearby colony mechs, powered by its own "
+                + "chemfuel. This drains the fuel the shuttle needs to fly home.",
+                Icons.Charge);
         }
 
         public override void PostDraw()
         {
             base.PostDraw();
             // Marker overlay: show the charge spots around the hull while it's selected and enabled.
-            if (chargingEnabled && parent.Spawned && Find.Selector.IsSelected(parent))
+            if (Enabled && parent.Spawned && Find.Selector.IsSelected(parent))
             {
                 List<IntVec3> cells = new List<IntVec3>(ChargeCells());
                 if (cells.Count > 0) GenDraw.DrawFieldEdges(cells, ChargeCellColor);
@@ -206,14 +177,10 @@ namespace OdysseyShuttleVariants
         public override string CompInspectStringExtra()
         {
             if (!parent.Spawned) return null;
-            if (!chargingEnabled) return "Mech charging: off";
-            string s = "Mech charging: on";
-            if (chargingMechs.Count > 0)
-            {
-                s += " (" + chargingMechs.Count + "/" + EffectiveMaxSimultaneous + " charging)";
-            }
-            if (Fuel != null && !Fuel.HasFuel) s += " - out of chemfuel";
-            return s;
+            string charging = chargingMechs.Count > 0
+                ? " (" + chargingMechs.Count + "/" + EffectiveMaxSimultaneous + " charging)"
+                : null;
+            return StatusLine("Mech charging", charging);
         }
 
         private static readonly Color ChargeCellColor = new Color(0.3f, 0.9f, 0.4f, 0.5f);
