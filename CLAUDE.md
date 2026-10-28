@@ -1,6 +1,6 @@
 # CLAUDE.md — Odyssey Shuttle Variants
 
-A RimWorld 1.6 mod adding buildable transport-shuttle variants to the **Odyssey** shuttle system.
+A RimWorld 1.6 / 1.7 mod adding buildable transport-shuttle variants to the **Odyssey** shuttle system.
 This file is mod-specific; the **workspace** `../CLAUDE.md` (global RimWorld rules) also applies — on
 conflict, this file wins.
 
@@ -41,12 +41,21 @@ conflict, this file wins.
 - `WorldObject_LandedDrone` / `WorldObject_DroneCamp` + `TransportersArrivalAction_DroneLand` /
   `_DroneGift` — the autonomous-drone land/hold/camp/gift system. Full design + decompile anchors:
   `Source/DRONE_LANDING_BUILD.md`.
+- `CompShuttleFuelledService` - shared base for landed-shuttle services paid for from the shuttle's own
+  chemfuel: opt-in toggle (saved per service key), MP-synced `SetEnabled`, fuel lookup, status line. Used by
+  `CompMechChargerShuttle` (key `OSV_chargingEnabled`) and `CompPsychicResonanceField`.
+- **Psycaster shuttle (Royalty, `Royalty/Defs`)** - Troop-plus craft (12 seats, 150 kg, 150 tiles, 1500-tick
+  cooldown) that is a Dignified + Artistic meditation focus (+0.20) and carries `CompPsychicResonanceField`:
+  12.9-cell field, 10 chemfuel/day, refreshes `OSV_PsychicResonance` (x1.5 neural heat recovery) on the
+  faction's psycasters every 250 ticks.
 - `MultiplayerCompat.cs` — `if (MP.enabled)` registers sync methods for the world-object commands
   (`LaunchTo`, `FormCamp`); targeting stays local, UI side-effects guarded to the issuing client. The
   `0MultiplayerAPI.dll` stub is shipped in `Assemblies/` (see csproj) so the mod loads with or without MP.
 
 ## Build / deploy / test
-- `cd Source && dotnet build -c Release` (.NET 10 SDK → net48). CopyToMod drops both DLLs into `Assemblies/`.
+- `cd Source && dotnet build -c Release` builds both targets: net48 → `1.6/Assemblies/` and net10.0 →
+  `1.7/Assemblies/` (gitignored), each with `0MultiplayerAPI.dll`. 1.7 is Ludeon's own engine on .NET 10:
+  Harmony 3.x, no `RemoveFramework`.
 - Deploy: mirror-copy `Source/`-excluded into `<RimWorld>\Mods\OdysseyShuttleVariants` (the workspace
   `tools/deploy.ps1`, or robocopy `/MIR /XD Source obj bin .git`). It's a COPY, not a junction — redeploy
   after every change. **C# changes need a full game restart; XML reloads via Dev Mode → Reload Defs.**
@@ -56,21 +65,16 @@ conflict, this file wins.
 Done: ✅ 5 craft + passenger integration · ✅ typed capacity + cargo mass-split · ✅ autonomous drone
 (land/hold/recall/camp/gift) · ✅ MP sync · ✅ fuel/cooldown balance · ✅ research tree · ✅ directional art ·
 ✅ drone Biotech-gating (`Biotech/Defs/ThingDefs_Drone.xml`) · ✅ mech-shuttle field charging ·
-✅ mech-bay bandwidth upgrade research.
+✅ mech-bay bandwidth upgrade research · ✅ RimWorld 1.6 + 1.7 builds · ✅ psycaster shuttle (Royalty) and the
+per-shuttle Psycaster option · ✅ part-based paint masks, true-proportion frames, painting on · ✅ empty-drone
+launch after a cancelled load. All verified in game on 1.7 (2026-10-28).
 
 Remaining:
-1. **MP test** of the drone/camp/gift actions AND the new mech-charging toggle (troop/cargo launches
-   verified clean; the toggle syncs via `CompMechChargerShuttle.SetChargingEnabled` in `MultiplayerCompat`).
-2. **Paint masks — auto colour-match ships as-is; the `_<facing>m.png` masks were never hand-edited.**
-   `tools/remask.py` paints every pixel within tolerance of a target colour (white 235/70 for
-   troop/drone/cargo, green 175,177,161/70 for mech), so it catches hull panels it shouldn't and misses
-   accents it should — patchy, inconsistent paint zones. Reported on the Workshop (Trouperton, 4 Jul 2026).
-   Plan: first re-tune target colour + tolerance PER CRAFT aiming for ~90% auto; only go fully manual
-   (hand-edit each mask, red = paints / black = keeps colour, via the remask.py preview/apply loop) if
-   that falls short.
-   **Painting is currently DISABLED** (`paintable false` on `OSV_ShuttleBase`, 1.0.3) so the mod does
-   not ship a feature that shows the flaw off. **Re-enable it as part of this work** - otherwise the
-   masks get fixed and the option stays quietly switched off.
+1. **Release** the 1.7 update: bump `About/Manifest.xml` (1.0.3 -> 1.0.4), add a changelog entry to the
+   About.xml description, upload from the in-game Mods menu, paste the description on the Workshop page.
+2. **MP test** (on 1.6 - the Multiplayer mod has no 1.7 build yet) of the drone/camp/gift actions, the
+   mech-charging and resonance-field toggles (synced via `CompShuttleFuelledService.SetEnabled` in
+   `MultiplayerCompat`), and the MP-only mass/landing problems reported on the Workshop (still unreproduced).
 
 Recently landed (implementation notes):
 - **Mech charging at the Mechanitor shuttle** (`CompMechChargerShuttle` + `JobDriver_MechChargeAtShuttle` +
@@ -93,9 +97,9 @@ Recently landed (implementation notes):
   EffectiveMechBandwidth` = base + finished-research bonus; ALL cap reads (inspect line, info card, load-dialog
   readout + accept, enter-job budget) route through it, so already-built ships benefit live.
 
-## Related (separate future mods)
-- **Crew Presets** — named groups of pawns (colonists/animals/mechs) applied across the vanilla pawn-selection
-  dialogs (per-save). Design: `../ModIdeas/CrewPresets-DESIGN.md`.
-- **Transporter Loadouts** — named item manifests (e.g. 200 chemfuel + 100 meals) applied in cargo dialogs
-  (global/cross-save, since they're item-defs not pawns). Design: `../ModIdeas/TransporterLoadouts-DESIGN.md`.
-- Both standalone (no Odyssey dep); they pair if installed together.
+## Related (separate published mods)
+- **Crew Presets** (`../CrewPresets/`, Workshop 3756372833) — named groups of pawns (colonists/animals/
+  mechs) applied across the vanilla pawn-selection dialogs (per-save).
+- **Transporter Loadouts** (`../TransporterLoadouts/`, Workshop 3756377821) — each transporter remembers
+  its own default cargo manifest (per-instance, per-save), pre-filled in its load dialog.
+- Both standalone (no Odyssey dep); the About.xml descriptions cross-link all three as companion mods.
