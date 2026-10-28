@@ -248,10 +248,14 @@ namespace OdysseyShuttleVariants
             EnsureLaunchReady();
         }
 
-        public override void CompTickRare()
+        // Shuttles are Normal tickers, which never receive CompTickRare.
+        public override void CompTickInterval(int delta)
         {
-            base.CompTickRare();
-            EnsureLaunchReady();
+            base.CompTickInterval(delta);
+            if (parent.IsHashIntervalTick(GenTicks.TickRareInterval, delta))
+            {
+                EnsureLaunchReady();
+            }
         }
 
         // The autonomous drone has no crew/cargo to "load", but vanilla blocks launch until a load
