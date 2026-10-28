@@ -19,7 +19,7 @@
     </statBases>
     <graphicData>
       <texPath>Things/Building/OSV/DroneShuttle/DroneShuttle</texPath>
-      <drawSize>(2.4,5)</drawSize>
+      <drawSize>(3.25, 5)</drawSize>
       <shadowData>
         <volume>(1.2, 1.0, 3.5)</volume>
       </shadowData>
@@ -79,7 +79,7 @@
     <label>transport drone (incoming)</label>
     <graphicData>
       <texPath>Things/Building/OSV/DroneShuttle/DroneShuttle</texPath>
-      <drawSize>(2.4,5)</drawSize>
+      <drawSize>(3.25, 5)</drawSize>
     </graphicData>
   </ThingDef>
   <ThingDef ParentName="OSV_ShuttleLeavingBase">
@@ -87,7 +87,7 @@
     <label>transport drone (leaving)</label>
     <graphicData>
       <texPath>Things/Building/OSV/DroneShuttle/DroneShuttle</texPath>
-      <drawSize>(2.4,5)</drawSize>
+      <drawSize>(3.25, 5)</drawSize>
     </graphicData>
   </ThingDef>
 

@@ -42,10 +42,7 @@
     <building>
       <claimable>false</claimable>
       <destroySound>BuildingDestroyed_Metal_Big</destroySound>
-      <!-- Painting is off: the colour masks come from an automatic colour-match pass that does
-           not follow the hulls' paint zones, so paint would land on panels it shouldn't and miss
-           accents it should. -->
-      <paintable>false</paintable>
+      <paintable>true</paintable>
       <isInert>true</isInert>
       <forcedCostLeavings>
         <li MayRequire="Ludeon.RimWorld.Odyssey">ShuttleEngine</li>
@@ -157,13 +154,11 @@
     </statBases>
     <graphicData>
       <texPath>Things/Building/OSV/CargoShuttle/CargoShuttle</texPath>
-      <drawSize>(4.3,6.6)</drawSize>
+      <drawSize>(4, 6)</drawSize>
       <shadowData>
         <volume>(1.2, 1.0, 3.5)</volume>
       </shadowData>
     </graphicData>
-    <!-- drawSize 6.6 vs 4x6 footprint overflows the architect button ~1.1x; 0.9 brings it to ~0.99. -->
-    <uiIconScale>0.9</uiIconScale>
     <costList>
       <Steel>300</Steel>
       <Plasteel>200</Plasteel>
@@ -218,7 +213,7 @@
     <label>cargo shuttle (incoming)</label>
     <graphicData>
       <texPath>Things/Building/OSV/CargoShuttle/CargoShuttle</texPath>
-      <drawSize>(4.3,6.6)</drawSize>
+      <drawSize>(4, 6)</drawSize>
     </graphicData>
   </ThingDef>
   <ThingDef ParentName="OSV_ShuttleLeavingBase">
@@ -226,7 +221,7 @@
     <label>cargo shuttle (leaving)</label>
     <graphicData>
       <texPath>Things/Building/OSV/CargoShuttle/CargoShuttle</texPath>
-      <drawSize>(4.3,6.6)</drawSize>
+      <drawSize>(4, 6)</drawSize>
     </graphicData>
   </ThingDef>
 

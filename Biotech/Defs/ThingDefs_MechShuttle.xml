@@ -15,7 +15,7 @@
     </statBases>
     <graphicData>
       <texPath>Things/Building/OSV/MechShuttle/MechShuttle</texPath>
-      <drawSize>(2.4,5)</drawSize>
+      <drawSize>(3.625, 5)</drawSize>
       <shadowData>
         <volume>(1.2, 1.0, 3.5)</volume>
       </shadowData>
@@ -85,7 +85,7 @@
     <label>mechanitor shuttle (incoming)</label>
     <graphicData>
       <texPath>Things/Building/OSV/MechShuttle/MechShuttle</texPath>
-      <drawSize>(2.4,5)</drawSize>
+      <drawSize>(3.625, 5)</drawSize>
     </graphicData>
   </ThingDef>
   <ThingDef ParentName="OSV_ShuttleLeavingBase">
@@ -93,7 +93,7 @@
     <label>mechanitor shuttle (leaving)</label>
     <graphicData>
       <texPath>Things/Building/OSV/MechShuttle/MechShuttle</texPath>
-      <drawSize>(2.4,5)</drawSize>
+      <drawSize>(3.625, 5)</drawSize>
     </graphicData>
   </ThingDef>
 

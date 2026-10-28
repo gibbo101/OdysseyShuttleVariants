@@ -22,7 +22,7 @@
     <graphicData>
       <texPath>Things/Building/OSV/HeavyCargoShip/HeavyCargoShip</texPath>
       <!-- north orientation: 5.8 wide x 10 deep (swaps to 10x5.8 when facing east). -->
-      <drawSize>(5.8, 10)</drawSize>
+      <drawSize>(6, 10)</drawSize>
       <shadowData>
         <volume>(4.5, 1.0, 9.0)</volume>
       </shadowData>
@@ -82,7 +82,7 @@
     <label>heavy cargo ship (incoming)</label>
     <graphicData>
       <texPath>Things/Building/OSV/HeavyCargoShip/HeavyCargoShip</texPath>
-      <drawSize>(5.8, 10)</drawSize>
+      <drawSize>(6, 10)</drawSize>
     </graphicData>
   </ThingDef>
   <ThingDef ParentName="OSV_ShuttleLeavingBase">
@@ -90,7 +90,7 @@
     <label>heavy cargo ship (leaving)</label>
     <graphicData>
       <texPath>Things/Building/OSV/HeavyCargoShip/HeavyCargoShip</texPath>
-      <drawSize>(5.8, 10)</drawSize>
+      <drawSize>(6, 10)</drawSize>
     </graphicData>
   </ThingDef>
 
